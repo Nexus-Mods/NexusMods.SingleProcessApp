@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <XunitStartupAssembly>NexusMods.SingleProcess.Tests</XunitStartupAssembly>
+    </PropertyGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\NexusMods.SingleProcess\NexusMods.SingleProcess.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Update="xunit" Version="2.5.3" />
+      <PackageReference Update="xunit.runner.visualstudio" Version="2.5.3">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+    </ItemGroup>
+</Project>

@@ -1,4 +1,4 @@
-# NexusMods.App.Template
+# NexusMods.App.SingleProcess
 
 This is a template repository for `NexusMods.App.*` repositories.
 
