@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -22,9 +23,10 @@ public class MainProcessDirector : IAsyncDisposable
     private TcpListener? _tcpListener;
     private readonly ILogger<MainProcessDirector> _logger;
     private Task? _listenerTask;
-    private Dictionary<TcpClient, Task> _runningClients = new();
+    private List<Task> _runningClients = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
+    private readonly DateTime _lastConnection;
 
     /// <summary>
     /// The director for the main process, this is responsible for starting the main process, and setting up the TCP Listener
@@ -38,7 +40,18 @@ public class MainProcessDirector : IAsyncDisposable
         _settings = singleProcessSettings;
         _cancellationTokenSource = new();
         _cancellationToken = _cancellationTokenSource.Token;
+        _lastConnection = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Returns true if the director is listening for connections
+    /// </summary>
+    public bool IsListening => _listenerTask is { IsCompleted: false };
+
+    /// <summary>
+    /// Returns true if this process is the main process
+    /// </summary>
+    public bool IsMainProcess => _sharedArray is not null && GetSyncInfo().Process is not null;
 
     /// <summary>
     /// Attempt to start the main process, if it's already running, this will return false and the app
@@ -127,22 +140,62 @@ public class MainProcessDirector : IAsyncDisposable
 
     private async Task StartListening()
     {
-        while (true)
+        while (!_cancellationToken.IsCancellationRequested)
         {
             try
             {
-                var found = await _tcpListener!.AcceptTcpClientAsync(_cancellationToken);
-                _runningClients.Add(found, Task.Run(() => HandleClient(found), _cancellationToken));
+                if (ShouldExit())
+                {
+                    _logger.LogInformation("No connections after {Seconds} seconds, exiting", _settings.StayRunningTimeout.TotalSeconds);
+                    return;
+                }
+
+                // Create a timeout token, and combine it with the main cancellation token
+                var timeout = new CancellationTokenSource();
+                timeout.CancelAfter(_settings.ListenTimeout);
+                var combined = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, timeout.Token);
+
+                var found = await _tcpListener!.AcceptTcpClientAsync(combined.Token);
+
+                _runningClients.Add(Task.Run(() => HandleClient(found), _cancellationToken));
+
                 _logger.LogDebug("Accepted TCP connection from {RemoteEndPoint}",
                     ((IPEndPoint)found.Client.RemoteEndPoint!).Port);
+
+                CleanClosedConnections();
             }
             catch (OperationCanceledException)
             {
+                // The cancellation could be from the timeout, or the main cancellation token, if it's the
+                // timeout, then we should just continue, if it's the main cancellation token, then we should stop
+                if (!_cancellationToken.IsCancellationRequested)
+                    continue;
                 _logger.LogInformation("TCP listener was cancelled, stopping");
                 return;
             }
 
         }
+    }
+
+    /// <summary>
+    /// Returns true if the application should exit due to there being no connections recently generated
+    /// </summary>
+    /// <returns></returns>
+    private bool ShouldExit()
+    {
+        return _runningClients.Count == 0 && DateTime.UtcNow - _lastConnection > _settings.StayRunningTimeout;
+    }
+
+    /// <summary>
+    /// Clears up any closed connections in the <see cref="_runningClients"/> dictionary
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    private void CleanClosedConnections()
+    {
+        // Snapshot the dictionary before we modify it
+        foreach(var task in _runningClients.ToArray())
+            if (task.IsCompleted)
+                _runningClients.Remove(task);
     }
 
     /// <summary>
@@ -185,6 +238,10 @@ public class MainProcessDirector : IAsyncDisposable
         return BinaryPrimitives.ReadUInt64BigEndian(buffer);
     }
 
+    /// <summary>
+    /// Returns the current process and port that's stored in the sync file
+    /// </summary>
+    /// <returns></returns>
     private (Process? Process, int Port) GetSyncInfo()
     {
         var val = _sharedArray!.Get(0);
@@ -204,12 +261,21 @@ public class MainProcessDirector : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Dispose of the director, this will stop the TCP listener, and dispose of the shared array, and make sure internal
+    /// tasks are cancelled and finished running.
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
+        _logger.LogInformation("Disposing of the main process director");
+        // Cancel the token first, so everything starts shutting down
         _cancellationTokenSource.Cancel();
+
+        // Wait for the listener to stop
         if (_listenerTask != null)
             await _listenerTask.WaitAsync(CancellationToken.None);
 
+        // Dispose of everything
         if (_sharedArray != null) await CastAndDispose(_sharedArray);
         if (_listenerTask != null) await CastAndDispose(_listenerTask);
         await CastAndDispose(_cancellationTokenSource);
