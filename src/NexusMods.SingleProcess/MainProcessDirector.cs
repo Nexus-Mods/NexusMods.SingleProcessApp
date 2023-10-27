@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -16,14 +14,12 @@ namespace NexusMods.SingleProcess;
 /// starting the main process, and piping CLI calls to the process, and transferring data
 /// between CLI processes and the main process.
 /// </summary>
-public class MainProcessDirector : IAsyncDisposable
+public class MainProcessDirector : ADirector
 {
-    private readonly SingleProcessSettings _settings;
-    private ISharedArray? _sharedArray;
     private TcpListener? _tcpListener;
     private readonly ILogger<MainProcessDirector> _logger;
     private Task? _listenerTask;
-    private List<Task> _runningClients = new();
+    private readonly List<Task> _runningClients = new();
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
     private readonly DateTime _lastConnection;
@@ -35,9 +31,9 @@ public class MainProcessDirector : IAsyncDisposable
     /// <param name="logger"></param>
     /// <param name="singleProcessSettings"></param>
     public MainProcessDirector(ILogger<MainProcessDirector> logger, SingleProcessSettings singleProcessSettings)
+        : base(singleProcessSettings)
     {
         _logger = logger;
-        _settings = singleProcessSettings;
         _cancellationTokenSource = new();
         _cancellationToken = _cancellationTokenSource.Token;
         _lastConnection = DateTime.UtcNow;
@@ -47,11 +43,6 @@ public class MainProcessDirector : IAsyncDisposable
     /// Returns true if the director is listening for connections
     /// </summary>
     public bool IsListening => _listenerTask is { IsCompleted: false };
-
-    /// <summary>
-    /// Returns true if this process is the main process
-    /// </summary>
-    public bool IsMainProcess => _sharedArray is not null && GetSyncInfo().Process is not null;
 
     /// <summary>
     /// Attempt to start the main process, if it's already running, this will return false and the app
@@ -83,10 +74,10 @@ public class MainProcessDirector : IAsyncDisposable
         while (true)
         {
             // Get the current value
-            var current = _sharedArray!.Get(0);
+            var current = SharedArray!.Get(0);
 
             // If the current value hasn't changed, then we are the main process
-            if (_sharedArray.CompareAndSwap(0, current, id))
+            if (SharedArray.CompareAndSwap(0, current, id))
                 break;
 
             // If a cancellation was requested, then we should stop
@@ -119,7 +110,7 @@ public class MainProcessDirector : IAsyncDisposable
     {
         while (!_cancellationToken.IsCancellationRequested)
         {
-            var port = Random.Shared.Next(_settings.PortMin, _settings.PortMax);
+            var port = Random.Shared.Next(Settings.PortMin, Settings.PortMax);
             try
             {
                 _tcpListener = new TcpListener(IPAddress.Loopback, port);
@@ -146,13 +137,13 @@ public class MainProcessDirector : IAsyncDisposable
             {
                 if (ShouldExit())
                 {
-                    _logger.LogInformation("No connections after {Seconds} seconds, exiting", _settings.StayRunningTimeout.TotalSeconds);
+                    _logger.LogInformation("No connections after {Seconds} seconds, exiting", Settings.StayRunningTimeout.TotalSeconds);
                     return;
                 }
 
                 // Create a timeout token, and combine it with the main cancellation token
                 var timeout = new CancellationTokenSource();
-                timeout.CancelAfter(_settings.ListenTimeout);
+                timeout.CancelAfter(Settings.ListenTimeout);
                 var combined = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, timeout.Token);
 
                 var found = await _tcpListener!.AcceptTcpClientAsync(combined.Token);
@@ -183,7 +174,7 @@ public class MainProcessDirector : IAsyncDisposable
     /// <returns></returns>
     private bool ShouldExit()
     {
-        return _runningClients.Count == 0 && DateTime.UtcNow - _lastConnection > _settings.StayRunningTimeout;
+        return _runningClients.Count == 0 && DateTime.UtcNow - _lastConnection > Settings.StayRunningTimeout;
     }
 
     /// <summary>
@@ -209,13 +200,6 @@ public class MainProcessDirector : IAsyncDisposable
         throw new NotImplementedException();
     }
 
-    /// <summary>
-    /// Connect to the shared array
-    /// </summary>
-    private void ConnectSharedArray()
-    {
-        _sharedArray = new MultiProcessSharedArray(_settings.SyncFile, (int)(_settings.SyncFileSize.Value / 8));
-    }
 
 
     /// <summary>
@@ -228,7 +212,7 @@ public class MainProcessDirector : IAsyncDisposable
     {
         if (_tcpListener is null)
             throw new InvalidOperationException("The TCP listener is not running");
-        if (_sharedArray is null)
+        if (SharedArray is null)
             throw new InvalidOperationException("The shared array is not initialized");
 
         Span<byte> buffer = stackalloc byte[8];
@@ -238,34 +222,12 @@ public class MainProcessDirector : IAsyncDisposable
         return BinaryPrimitives.ReadUInt64BigEndian(buffer);
     }
 
-    /// <summary>
-    /// Returns the current process and port that's stored in the sync file
-    /// </summary>
-    /// <returns></returns>
-    private (Process? Process, int Port) GetSyncInfo()
-    {
-        var val = _sharedArray!.Get(0);
-        var pid = (int)(val >> 32);
-        var port = (int)(val & 0xFFFFFFFF);
-
-        if (pid == 0)
-            return (null, port);
-
-        try
-        {
-            return (Process.GetProcessById(pid), port);
-        }
-        catch (ArgumentException)
-        {
-            return (null, port);
-        }
-    }
 
     /// <summary>
     /// Dispose of the director, this will stop the TCP listener, and dispose of the shared array, and make sure internal
     /// tasks are cancelled and finished running.
     /// </summary>
-    public async ValueTask DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         _logger.LogInformation("Disposing of the main process director");
         // Cancel the token first, so everything starts shutting down
@@ -276,7 +238,7 @@ public class MainProcessDirector : IAsyncDisposable
             await _listenerTask.WaitAsync(CancellationToken.None);
 
         // Dispose of everything
-        if (_sharedArray != null) await CastAndDispose(_sharedArray);
+        if (SharedArray != null) await CastAndDispose(SharedArray);
         if (_listenerTask != null) await CastAndDispose(_listenerTask);
         await CastAndDispose(_cancellationTokenSource);
 

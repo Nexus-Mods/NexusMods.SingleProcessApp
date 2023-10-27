@@ -11,6 +11,7 @@ public class Startup
     {
         container
             .AddSingleton<MainProcessDirector>()
+            .AddSingleton<ClientProcessDirector>()
             .AddSingleton<SingleProcessSettings>(_ => new SingleProcessSettings
             {
                 MainApplication = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory),
