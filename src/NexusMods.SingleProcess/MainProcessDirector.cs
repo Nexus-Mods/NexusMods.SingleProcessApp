@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Nerdbank.Streams;
 
 namespace NexusMods.SingleProcess;
 
@@ -209,28 +210,39 @@ public class MainProcessDirector : ADirector
     private async Task HandleClient(TcpClient client, IMainProcessHandler handler)
     {
         var stream = client.GetStream();
-        using var binaryReader = new BinaryReader(stream, Encoding.UTF8, true);
-        var argc = binaryReader.ReadInt32();
-        var args = new string[argc];
 
-        for (var i = 0; i < argc; i++)
-            args[i] = binaryReader.ReadString();
+        await using var multiplexer = await MultiplexingStream.CreateAsync(stream, _cancellationToken);
+
+        using var argChannel = await multiplexer.OfferChannelAsync("args", cancellationToken: _cancellationToken);
+        using var stdInChannel = await multiplexer.OfferChannelAsync("stdin", cancellationToken: _cancellationToken);
+        using var stdOutChannel = await multiplexer.OfferChannelAsync("stdout", cancellationToken: _cancellationToken);
+        using var stdErrChannel = await multiplexer.OfferChannelAsync("stderr", cancellationToken: _cancellationToken);
+
+        string[] args;
+        {
+            await using var argStream = argChannel.AsStream();
+
+            using var binaryReader = new BinaryReader(argStream, Encoding.UTF8, true);
+            var argc = binaryReader.ReadInt32();
+            args = new string[argc];
+
+            for (var i = 0; i < argc; i++)
+                args[i] = binaryReader.ReadString();
+        }
+
+        await using var stdInStream = stdInChannel.AsStream();
+        await using var stdOutStream = stdOutChannel.AsStream();
+        await using var stdErrStream = stdErrChannel.AsStream();
 
         var proxiedConsole = new ProxiedConsole
         {
             Args = args,
-            StdIn = new StreamReader(stream, Encoding.UTF8, leaveOpen: true),
-            StdOut = new StreamWriter(stream, Encoding.UTF8, leaveOpen: true),
-            StdErr = StreamWriter.Null
+            StdIn = new StreamReader(stdInStream, Encoding.UTF8, leaveOpen: true),
+            StdOut = new StreamWriter(stdOutStream, Encoding.UTF8, leaveOpen: true),
+            StdErr = new StreamWriter(stdErrStream, Encoding.UTF8, leaveOpen: true),
         };
 
         await handler.Handle(proxiedConsole, _cancellationToken);
-
-        await proxiedConsole.StdErr.FlushAsync();
-        await proxiedConsole.StdOut.FlushAsync();
-        await stream.FlushAsync(_cancellationToken);
-        stream.Close();
-        client.Close();
     }
 
 
