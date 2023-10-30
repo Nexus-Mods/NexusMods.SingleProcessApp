@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace NexusMods.SingleProcess;
@@ -49,7 +52,7 @@ public class MainProcessDirector : ADirector
     /// should attempt to connect via a ClientProcessDirector.
     /// </summary>
     /// <returns></returns>
-    public async Task<bool> TryStartMain()
+    public async Task<bool> TryStartMain(IMainProcessHandler handler)
     {
         if (_cancellationToken.IsCancellationRequested)
             return false;
@@ -59,11 +62,18 @@ public class MainProcessDirector : ADirector
 
         // Look for an existing main process
         var (process, _) = GetSyncInfo();
-        if (process != null)
+        if (process != null && process.Id != Environment.ProcessId)
             return false;
 
+        if (process != null && process.Id == Environment.ProcessId)
+        {
+            _logger.LogInformation("This process ({ProcessId}) is already the main process", Environment.ProcessId);
+            return true;
+        }
 
-        await StartTcpListener();
+        _logger.LogInformation("No main process found, starting main process ({ProcessId})", Environment.ProcessId);
+
+        await StartTcpListener(handler);
 
         // If someone else has already started the main process, then we should stop
         if (MainIsAlreadyRunning())
@@ -106,7 +116,7 @@ public class MainProcessDirector : ADirector
         return false;
     }
 
-    private async Task StartTcpListener()
+    private async Task StartTcpListener(IMainProcessHandler handler)
     {
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -115,7 +125,7 @@ public class MainProcessDirector : ADirector
             {
                 _tcpListener = new TcpListener(IPAddress.Loopback, port);
                 _tcpListener.Start();
-                _listenerTask = Task.Run(StartListening, _cancellationToken);
+                _listenerTask = Task.Run(async () => await StartListening(handler), _cancellationToken);
                 _logger.LogInformation("Started TCP listener on port {Port}", port);
                 return;
             }
@@ -129,7 +139,7 @@ public class MainProcessDirector : ADirector
         throw new TaskCanceledException();
     }
 
-    private async Task StartListening()
+    private async Task StartListening(IMainProcessHandler handler)
     {
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -148,7 +158,7 @@ public class MainProcessDirector : ADirector
 
                 var found = await _tcpListener!.AcceptTcpClientAsync(combined.Token);
 
-                _runningClients.Add(Task.Run(() => HandleClient(found), _cancellationToken));
+                _runningClients.Add(Task.Run(() => HandleClient(found, handler), _cancellationToken));
 
                 _logger.LogDebug("Accepted TCP connection from {RemoteEndPoint}",
                     ((IPEndPoint)found.Client.RemoteEndPoint!).Port);
@@ -193,11 +203,34 @@ public class MainProcessDirector : ADirector
     /// Handle a client connection
     /// </summary>
     /// <param name="client"></param>
+    /// <param name="handler"></param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    private Task HandleClient(TcpClient client)
+    private async Task HandleClient(TcpClient client, IMainProcessHandler handler)
     {
-        throw new NotImplementedException();
+        var stream = client.GetStream();
+        using var binaryReader = new BinaryReader(stream, Encoding.UTF8, true);
+        var argc = binaryReader.ReadInt32();
+        var args = new string[argc];
+
+        for (var i = 0; i < argc; i++)
+            args[i] = binaryReader.ReadString();
+
+        var proxiedConsole = new ProxiedConsole
+        {
+            Args = args,
+            StdIn = new StreamReader(stream, Encoding.UTF8, leaveOpen: true),
+            StdOut = new StreamWriter(stream, Encoding.UTF8, leaveOpen: true),
+            StdErr = StreamWriter.Null
+        };
+
+        await handler.Handle(proxiedConsole, _cancellationToken);
+
+        await proxiedConsole.StdErr.FlushAsync();
+        await proxiedConsole.StdOut.FlushAsync();
+        await stream.FlushAsync(_cancellationToken);
+        stream.Close();
+        client.Close();
     }
 
 
@@ -230,6 +263,10 @@ public class MainProcessDirector : ADirector
     public override async ValueTask DisposeAsync()
     {
         _logger.LogInformation("Disposing of the main process director");
+
+        var ourVal = GetThisSyncValue();
+        SharedArray?.CompareAndSwap(0, ourVal, 0);
+
         // Cancel the token first, so everything starts shutting down
         _cancellationTokenSource.Cancel();
 
@@ -251,5 +288,11 @@ public class MainProcessDirector : ADirector
             else
                 resource.Dispose();
         }
+    }
+
+    public static MainProcessDirector Create(IServiceProvider serviceProvider)
+    {
+        return new MainProcessDirector(serviceProvider.GetRequiredService<ILogger<MainProcessDirector>>(),
+            serviceProvider.GetRequiredService<SingleProcessSettings>());
     }
 }
