@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 namespace NexusMods.SingleProcess.Tests;
 
@@ -31,7 +32,8 @@ public class ClientDirectorTests
             Args = "Some Args Here".Split(' '),
             StdOut = stdOut,
             StdIn = Stream.Null,
-            StdErr = Stream.Null
+            StdErr = Stream.Null,
+            OutputEncoding = AnsiConsole.Console.Profile.Encoding
         });
 
         var stdOutString = Encoding.UTF8.GetString(stdOut.ToArray());

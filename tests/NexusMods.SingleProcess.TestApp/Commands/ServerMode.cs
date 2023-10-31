@@ -56,16 +56,8 @@ class Handler : IMainProcessHandler
     {
         try
         {
-            await using var scope = _provider.CreateAsyncScope();
-            var converted = scope.ServiceProvider.GetRequiredService<ScopedConsole>().SetConsole(console);
-
-            var diConsole = scope.ServiceProvider.GetRequiredService<IAnsiConsole>();
-            if (converted != diConsole)
-            {
-                _logger.LogError("Console is not the same instance");
-            }
-
-            var app = scope.ServiceProvider.GetRequiredService<CommandApp>();
+            Globals.SetConsole(console);
+            var app = _provider.GetRequiredService<CommandApp>();
             await app.RunAsync(console.Args);
         }
         catch (Exception e)

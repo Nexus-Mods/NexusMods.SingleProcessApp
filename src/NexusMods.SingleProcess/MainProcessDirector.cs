@@ -219,10 +219,15 @@ public class MainProcessDirector : ADirector
         using var stdErrChannel = await multiplexer.OfferChannelAsync("stderr", cancellationToken: _cancellationToken);
 
         string[] args;
+        Encoding encoding;
         {
             await using var argStream = argChannel.AsStream();
 
             using var binaryReader = new BinaryReader(argStream, Encoding.UTF8, true);
+
+            var encodingName = binaryReader.ReadString();
+            encoding = Encoding.GetEncoding(encodingName);
+
             var argc = binaryReader.ReadInt32();
             args = new string[argc];
 
@@ -234,12 +239,15 @@ public class MainProcessDirector : ADirector
         await using var stdOutStream = stdOutChannel.AsStream();
         await using var stdErrStream = stdErrChannel.AsStream();
 
+
+
         var proxiedConsole = new ProxiedConsole
         {
             Args = args,
             StdIn = stdInStream,
             StdOut = stdOutStream,
-            StdErr = stdErrStream
+            StdErr = stdErrStream,
+            OutputEncoding = encoding
         };
 
         await handler.Handle(proxiedConsole, _cancellationToken);

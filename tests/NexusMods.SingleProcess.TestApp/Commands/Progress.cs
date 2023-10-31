@@ -20,7 +20,7 @@ public class Progress : AsyncCommand<Progress.Settings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, Progress.Settings settings)
     {
-        await _console.Console.Progress()
+        await Globals.Console.Value!.Progress()
             .AutoClear(false)
             .Columns(new TaskDescriptionColumn(),
                 new ProgressBarColumn(),

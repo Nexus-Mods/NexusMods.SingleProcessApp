@@ -65,6 +65,7 @@ public class ClientProcessDirector : ADirector
                 await using var argsStream = argsChannel.AsStream();
                 await using var bw = new BinaryWriter(argsStream, Encoding.UTF8, true);
 
+                bw.Write(proxy.OutputEncoding.EncodingName);
                 bw.Write(proxy.Args.Length);
                 foreach (var arg in proxy.Args)
                 {

@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexusMods.Paths;
@@ -17,10 +18,10 @@ var host = Host.CreateDefaultBuilder()
     {
         var registrar = new TypeRegistrar(s);
         s.AddLogging();
-        s.AddScoped<MainProcessDirector>();
-        s.AddScoped<ClientProcessDirector>();
+        s.AddSingleton<MainProcessDirector>();
+        s.AddSingleton<ClientProcessDirector>();
 
-        s.AddScoped<ScopedConsole>();
+        s.AddSingleton<ScopedConsole>();
 
         //s.Remove(s.First(d => d.ImplementationType == typeof(IAnsiConsole)));
 
@@ -47,6 +48,8 @@ var host = Host.CreateDefaultBuilder()
         s.AddScoped<IAnsiConsole>(provider => provider.GetRequiredService<ScopedConsole>().Console);
     }).Build();
 
+Console.OutputEncoding = Encoding.UTF8;
+
 if (args[0] == "server-mode")
 {
     using var scope = host.Services.CreateScope();
@@ -62,6 +65,7 @@ else
         StdIn = Console.OpenStandardInput(),
         StdOut = Console.OpenStandardOutput(),
         StdErr = Console.OpenStandardError(),
+        OutputEncoding = Console.OutputEncoding
     });
 }
 

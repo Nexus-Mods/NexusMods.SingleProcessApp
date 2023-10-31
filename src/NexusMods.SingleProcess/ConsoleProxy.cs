@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 
 namespace NexusMods.SingleProcess;
 
@@ -23,4 +24,9 @@ public class ProxiedConsole
     /// The arguments passed to the application on startup
     /// </summary>
     public required string[] Args { get; init; }
+
+    /// <summary>
+    /// The encoding of the output streams
+    /// </summary>
+    public required Encoding OutputEncoding { get; init; }
 }
