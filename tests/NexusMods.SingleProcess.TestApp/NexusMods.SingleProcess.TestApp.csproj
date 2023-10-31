@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <GenerateProgramFile>false</GenerateProgramFile>
+
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Spectre.Console.Cli" Version="0.47.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\NexusMods.SingleProcess\NexusMods.SingleProcess.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\NexusMods.SingleProcess\NexusMods.SingleProcess.csproj" />
+    </ItemGroup>
+
+</Project>

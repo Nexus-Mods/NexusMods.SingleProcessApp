@@ -237,9 +237,9 @@ public class MainProcessDirector : ADirector
         var proxiedConsole = new ProxiedConsole
         {
             Args = args,
-            StdIn = new StreamReader(stdInStream, Encoding.UTF8, leaveOpen: true),
-            StdOut = new StreamWriter(stdOutStream, Encoding.UTF8, leaveOpen: true),
-            StdErr = new StreamWriter(stdErrStream, Encoding.UTF8, leaveOpen: true),
+            StdIn = stdInStream,
+            StdOut = stdOutStream,
+            StdErr = stdErrStream
         };
 
         await handler.Handle(proxiedConsole, _cancellationToken);

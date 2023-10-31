@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NexusMods.SingleProcess;
 
-public abstract class ADirector : IAsyncDisposable
+public abstract class ADirector : IAsyncDisposable, IDisposable
 {
     protected readonly SingleProcessSettings Settings;
     protected ISharedArray? SharedArray;
@@ -53,5 +54,13 @@ public abstract class ADirector : IAsyncDisposable
         {
             return (null, port);
         }
+    }
+
+    public void Dispose()
+    {
+        if (this is IAsyncDisposable ad)
+            ad.DisposeAsync()
+                .AsTask()
+                .Wait(CancellationToken.None);
     }
 }

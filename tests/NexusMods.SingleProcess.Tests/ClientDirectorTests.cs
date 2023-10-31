@@ -29,9 +29,9 @@ public class ClientDirectorTests
         await client.StartClient(new ProxiedConsole
         {
             Args = "Some Args Here".Split(' '),
-            StdOut = new StreamWriter(stdOut, Encoding.UTF8, 1024, true),
-            StdIn = new StreamReader(Stream.Null),
-            StdErr = new StreamWriter(Stream.Null, Encoding.UTF8, 1024, true)
+            StdOut = stdOut,
+            StdIn = Stream.Null,
+            StdErr = Stream.Null
         });
 
         var stdOutString = Encoding.UTF8.GetString(stdOut.ToArray());
@@ -49,9 +49,9 @@ public class ClientDirectorTests
         public async Task Handle(ProxiedConsole console, CancellationToken token)
         {
             _handlerLogger.LogInformation("Received {Count} arguments", console.Args.Length);
-            await console.StdOut.WriteAsync("Hello World! - " + string.Join("|", console.Args));
+            await console.StdOut.WriteAsync(Encoding.UTF8.GetBytes("Hello World! - " + string.Join("|", console.Args)), token);
 
-            await console.StdOut.FlushAsync();
+            await console.StdOut.FlushAsync(token);
             await Task.Delay(1000, token);
         }
     }
