@@ -1,6 +1,9 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Spectre.Console;
+using NexusMods.ProxyConsole;
+using NexusMods.ProxyConsole.Abstractions;
+using NexusMods.ProxyConsole.Implementations;
+using Spectre.Console.Testing;
 
 namespace NexusMods.SingleProcess.Tests;
 
@@ -23,38 +26,41 @@ public class ClientDirectorTests
         await using var main = MainProcessDirector.Create(_serviceProvider);
         await using var client = ClientProcessDirector.Create(_serviceProvider);
 
-        await main.TryStartMain(new EchoArgsHandler(_logger));
+
+        var handler = new EchoArgsHandler(_logger);
+        await main.TryStartMain(handler);
+
+        var testConsole = new TestConsole();
 
 
-        var stdOut = new MemoryStream();
-        await client.StartClient(new ProxiedConsole
+        await client.StartClient(new ConsoleSettings
         {
-            Args = "Some Args Here".Split(' '),
-            StdOut = stdOut,
-            StdIn = Stream.Null,
-            StdErr = Stream.Null,
-            OutputEncoding = AnsiConsole.Console.Profile.Encoding
+            Arguments = new[] {"Some", "Args", "Here"},
+            Renderer = new SpectreRenderer(testConsole)
         });
 
-        var stdOutString = Encoding.UTF8.GetString(stdOut.ToArray());
-        stdOutString.Should().Contain("Hello World! - Some|Args|Here");
+        (await handler.Handled).Should().BeEquivalentTo("Some", "Args", "Here");
+
+        testConsole.Output.Should().Be("Hello World! - Some|Args|Here");
     }
 
     public class EchoArgsHandler : IMainProcessHandler
     {
         private readonly ILogger _handlerLogger;
+        private readonly TaskCompletionSource<string[]> _handled;
+
+        public Task<string[]> Handled => _handled.Task;
 
         public EchoArgsHandler(ILogger logger)
         {
             _handlerLogger = logger;
+            _handled = new TaskCompletionSource<string[]>();
         }
-        public async Task Handle(ProxiedConsole console, CancellationToken token)
+        public async Task HandleAsync(string[] arguments, IRenderer console, CancellationToken token)
         {
-            _handlerLogger.LogInformation("Received {Count} arguments", console.Args.Length);
-            await console.StdOut.WriteAsync(Encoding.UTF8.GetBytes("Hello World! - " + string.Join("|", console.Args)), token);
-
-            await console.StdOut.FlushAsync(token);
-            await Task.Delay(1000, token);
+            _handlerLogger.LogInformation("Received {Count} arguments", arguments.Length);
+            await console.RenderAsync(new Text { Template = $"Hello World! - {string.Join('|', arguments)}" });
+            _handled.SetResult(arguments);
         }
     }
 

@@ -19,7 +19,7 @@ public class ScopedConsole
 
     private IAnsiConsole? _console;
 
-    public IAnsiConsole SetConsole(ProxiedConsole console)
+    public IAnsiConsole SetConsole(ConsoleSettings console)
     {
         _console = AnsiConsole.Create(new AnsiConsoleSettings
         {

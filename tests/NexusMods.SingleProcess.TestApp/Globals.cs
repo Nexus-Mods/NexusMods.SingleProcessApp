@@ -7,13 +7,15 @@ public static class Globals
 {
     public static AsyncLocal<IAnsiConsole> Console = new();
 
-    public static void SetConsole(ProxiedConsole console)
+    public static void SetConsole(ConsoleSettings console)
     {
         Console.Value = AnsiConsole.Create(new AnsiConsoleSettings
         {
             Ansi = AnsiSupport.Detect,
             ColorSystem = ColorSystemSupport.Detect,
-            Out = new AnsiConsoleOutput(new StreamWriter(console.StdOut, console.OutputEncoding))
+            Out = new AnsiConsoleOutput(new StreamWriter(console.StdOut, console.OutputEncoding)),
         });
+
+
     }
 }

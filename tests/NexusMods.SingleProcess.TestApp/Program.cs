@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexusMods.Paths;
+using NexusMods.ProxyConsole;
 using NexusMods.SingleProcess;
 using NexusMods.SingleProcess.TestApp;
 using NexusMods.SingleProcess.TestApp.Commands;
@@ -41,9 +42,12 @@ var host = Host.CreateDefaultBuilder()
             {
                 c.AddCommand<Progress>("progress");
                 c.AddCommand<ServerMode>("server-mode");
+                c.AddCommand<TextPrompt>("text-prompt");
             });
             return app;
         });
+
+
 
         s.AddScoped<IAnsiConsole>(provider => provider.GetRequiredService<ScopedConsole>().Console);
     }).Build();
@@ -59,13 +63,10 @@ if (args[0] == "server-mode")
 else
 {
     var client = host.Services.GetRequiredService<ClientProcessDirector>();
-    await client.StartClient(new ProxiedConsole
+    await client.StartClient(new ConsoleSettings
     {
-        Args = args,
-        StdIn = Console.OpenStandardInput(),
-        StdOut = Console.OpenStandardOutput(),
-        StdErr = Console.OpenStandardError(),
-        OutputEncoding = Console.OutputEncoding
+        Arguments = args,
+        Renderer = new SpectreRenderer(AnsiConsole.Console)
     });
 }
 

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nerdbank.Streams;
+using NexusMods.ProxyConsole;
 
 namespace NexusMods.SingleProcess;
 
@@ -22,7 +23,7 @@ public class ClientProcessDirector : ADirector
         _logger = logger;
     }
 
-    public async Task StartClient(ProxiedConsole proxy)
+    public async Task StartClient(ConsoleSettings proxy)
     {
         ConnectSharedArray();
 
@@ -50,41 +51,12 @@ public class ClientProcessDirector : ADirector
         }
     }
 
-    private async Task RunTillClose(ProxiedConsole proxy)
+    private async Task RunTillClose(ConsoleSettings proxy)
     {
         try
         {
-            await using var multiplexer = await MultiplexingStream.CreateAsync(_stream!);
-
-            var argsChannel = await multiplexer.AcceptChannelAsync("args");
-            var stdInChannel = await multiplexer.AcceptChannelAsync("stdin");
-            var stdOutChannel = await multiplexer.AcceptChannelAsync("stdout");
-            var stdErrChannel = await multiplexer.AcceptChannelAsync("stderr");
-
-            {
-                await using var argsStream = argsChannel.AsStream();
-                await using var bw = new BinaryWriter(argsStream, Encoding.UTF8, true);
-
-                bw.Write(proxy.OutputEncoding.EncodingName);
-                bw.Write(proxy.Args.Length);
-                foreach (var arg in proxy.Args)
-                {
-                    bw.Write(arg);
-                }
-                bw.Flush();
-            }
-
-            {
-                await using var stdInStream = stdInChannel.AsStream();
-                await using var stdOutStream = stdOutChannel.AsStream();
-                await using var stdErrStream = stdErrChannel.AsStream();
-
-                var stdInTask = proxy.StdIn.CopyToAsync(stdInStream);
-                var stdOutTask = stdOutStream.CopyToAsync(proxy.StdOut);
-                var stdErrTask = stdErrStream.CopyToAsync(proxy.StdErr);
-
-                await Task.WhenAll(stdInTask, stdOutTask, stdErrTask);
-            }
+            var adaptor = new ClientRendererAdaptor(_stream!, proxy.Renderer, proxy.Arguments);
+            await adaptor.RunningTask;
         }
         catch (IOException ex)
         {
@@ -92,6 +64,7 @@ public class ClientProcessDirector : ADirector
         }
     }
 
+    /*
     private async Task SendStartupInfo(ProxiedConsole proxy)
     {
         await using var binaryWriter = new BinaryWriter(_stream!, Encoding.UTF8, true);
@@ -102,6 +75,7 @@ public class ClientProcessDirector : ADirector
         }
         binaryWriter.Flush();
     }
+    */
 
 
     public override async ValueTask DisposeAsync()

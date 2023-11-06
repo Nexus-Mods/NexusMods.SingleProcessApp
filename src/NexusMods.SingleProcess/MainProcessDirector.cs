@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Nerdbank.Streams;
+using NexusMods.ProxyConsole;
 
 namespace NexusMods.SingleProcess;
 
@@ -161,7 +162,7 @@ public class MainProcessDirector : ADirector
 
                 _runningClients.Add(Task.Run(() => HandleClient(found, handler), _cancellationToken));
 
-                _logger.LogDebug("Accepted TCP connection from {RemoteEndPoint}",
+                _logger.LogInformation("Accepted TCP connection from {RemoteEndPoint}",
                     ((IPEndPoint)found.Client.RemoteEndPoint!).Port);
 
                 CleanClosedConnections();
@@ -211,46 +212,10 @@ public class MainProcessDirector : ADirector
     {
         var stream = client.GetStream();
 
-        await using var multiplexer = await MultiplexingStream.CreateAsync(stream, _cancellationToken);
+        var (arguments, renderer) = await ProxiedRenderer.Create(stream);
+        await handler.HandleAsync(arguments, renderer, _cancellationToken);
 
-        using var argChannel = await multiplexer.OfferChannelAsync("args", cancellationToken: _cancellationToken);
-        using var stdInChannel = await multiplexer.OfferChannelAsync("stdin", cancellationToken: _cancellationToken);
-        using var stdOutChannel = await multiplexer.OfferChannelAsync("stdout", cancellationToken: _cancellationToken);
-        using var stdErrChannel = await multiplexer.OfferChannelAsync("stderr", cancellationToken: _cancellationToken);
-
-        string[] args;
-        Encoding encoding;
-        {
-            await using var argStream = argChannel.AsStream();
-
-            using var binaryReader = new BinaryReader(argStream, Encoding.UTF8, true);
-
-            var encodingName = binaryReader.ReadString();
-            encoding = Encoding.GetEncoding(encodingName);
-
-            var argc = binaryReader.ReadInt32();
-            args = new string[argc];
-
-            for (var i = 0; i < argc; i++)
-                args[i] = binaryReader.ReadString();
-        }
-
-        await using var stdInStream = stdInChannel.AsStream();
-        await using var stdOutStream = stdOutChannel.AsStream();
-        await using var stdErrStream = stdErrChannel.AsStream();
-
-
-
-        var proxiedConsole = new ProxiedConsole
-        {
-            Args = args,
-            StdIn = stdInStream,
-            StdOut = stdOutStream,
-            StdErr = stdErrStream,
-            OutputEncoding = encoding
-        };
-
-        await handler.Handle(proxiedConsole, _cancellationToken);
+        client.Dispose();
     }
 
 

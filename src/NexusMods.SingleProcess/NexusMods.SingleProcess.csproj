@@ -4,9 +4,14 @@
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <ItemGroup>
+      <PackageReference Include="MemoryPack.Streaming" Version="1.9.16" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
       <PackageReference Include="Nerdbank.Streams" Version="2.10.72" />
       <PackageReference Include="NexusMods.Paths" Version="0.1.8" />
+      <PackageReference Include="Spectre.Console" Version="0.47.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\NexusMods.ProxyConsole\NexusMods.ProxyConsole.csproj" />
     </ItemGroup>
     <Import Project="$([MSBuild]::GetPathOfFileAbove('NuGet.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 </Project>

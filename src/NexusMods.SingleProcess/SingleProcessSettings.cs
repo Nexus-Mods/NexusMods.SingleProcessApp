@@ -41,11 +41,11 @@ public class SingleProcessSettings
     /// <summary>
     /// The amount of time the TCPListener will pause waiting for new connections before checking if it should exit.
     /// </summary>
-    public TimeSpan ListenTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan ListenTimeout { get; set; } = TimeSpan.FromSeconds(300);
 
     /// <summary>
     /// The amount of time the main process will wait for new connections before terminating.
     /// </summary>
-    public TimeSpan StayRunningTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan StayRunningTimeout { get; set; } = TimeSpan.FromSeconds(300);
 
 }

@@ -1,0 +1,19 @@
+using System.Threading.Tasks;
+
+namespace NexusMods.ProxyConsole.Abstractions;
+
+public interface IRenderer
+{
+    /// <summary>
+    /// Renders the renderable to the console.
+    /// </summary>
+    /// <param name="renderable"></param>
+    /// <returns></returns>
+    public ValueTask RenderAsync(IRenderable renderable);
+
+    /// <summary>
+    /// Clears the console.
+    /// </summary>
+    /// <returns></returns>
+    public ValueTask ClearAsync();
+}

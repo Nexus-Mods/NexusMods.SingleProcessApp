@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NexusMods.ProxyConsole.Abstractions;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -39,8 +40,6 @@ public class ServerMode : AsyncCommand<ServerMode.Settings>
     }
 }
 
-
-
 class Handler : IMainProcessHandler
 {
     private readonly IServiceProvider _provider;
@@ -52,13 +51,13 @@ class Handler : IMainProcessHandler
         _logger = provider.GetRequiredService<ILogger<Handler>>();
     }
 
-    public async Task Handle(ProxiedConsole console, CancellationToken token)
+    public Task HandleAsync(string[] arguments, IRenderer console, CancellationToken token)
     {
         try
         {
             Globals.SetConsole(console);
             var app = _provider.GetRequiredService<CommandApp>();
-            await app.RunAsync(console.Args);
+            await app.RunAsync(console, arguments);
         }
         catch (Exception e)
         {

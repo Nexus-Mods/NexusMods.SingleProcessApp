@@ -4,6 +4,7 @@
     </PropertyGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\src\NexusMods.SingleProcess\NexusMods.SingleProcess.csproj" />
+      <ProjectReference Include="..\..\src\NexusMods.ProxyConsole\NexusMods.ProxyConsole.csproj" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Update="xunit" Version="2.5.3" />
@@ -12,6 +13,7 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Spectre.Console" Version="0.47.0" />
+      <PackageReference Include="Spectre.Console.Testing" Version="0.47.0" />
     </ItemGroup>
     <ItemGroup>
       <None Update="xunit.runner.json">
