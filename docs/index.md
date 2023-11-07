@@ -105,3 +105,10 @@ public class EchoArgsHandler : IMainProcessHandler
     }
 }
 ```
+
+## Project Structure
+
+The Project is roughly split into 2 sub-projects: `NexusMods.SingleProcess` and `NexusMods.ProxyConsole`. The latter is
+primarily focused on transporting console output across an arbitrary duplex stream, and rendering those messages via
+`IAnsiConsole` from the Spectre.Console library. The former requires the latter, and provides the `MainProcessDirector`
+and `ClientProcessDirector` classes.
