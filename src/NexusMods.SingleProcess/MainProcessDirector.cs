@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nerdbank.Streams;
 using NexusMods.ProxyConsole;
 
 namespace NexusMods.SingleProcess;
@@ -118,7 +115,19 @@ public class MainProcessDirector : ADirector
         return false;
     }
 
-    private async Task StartTcpListenerAsync(IMainProcessHandler handler)
+    /// <summary>
+    /// Returns a IDisposable that will keep the main process alive for at least as long as the IDisposable left un-disposed.
+    /// Multiple calls to this method can be made and the main process will only exit when all the returned tokens are disposed.
+    /// </summary>
+    /// <returns></returns>
+    public IDisposable MakeKeepAliveToken()
+    {
+        var tcs = new TaskCompletionSource();
+        _runningClients.Add(tcs.Task);
+        return new KeepAliveToken(tcs);
+    }
+
+    private Task StartTcpListenerAsync(IMainProcessHandler handler)
     {
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -127,9 +136,9 @@ public class MainProcessDirector : ADirector
             {
                 _tcpListener = new TcpListener(IPAddress.Loopback, port);
                 _tcpListener.Start();
-                _listenerTask = Task.Run(async () => await StartListening(handler), _cancellationToken);
+                _listenerTask = Task.Run(async () => await StartListeningAsync(handler), _cancellationToken);
                 _logger.LogInformation("Started TCP listener on port {Port}", port);
-                return;
+                return Task.CompletedTask;
             }
             catch (SocketException exception)
             {
@@ -141,7 +150,7 @@ public class MainProcessDirector : ADirector
         throw new TaskCanceledException();
     }
 
-    private async Task StartListening(IMainProcessHandler handler)
+    private async Task StartListeningAsync(IMainProcessHandler handler)
     {
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -162,7 +171,7 @@ public class MainProcessDirector : ADirector
 
                 var found = await _tcpListener!.AcceptTcpClientAsync(combined.Token);
 
-                _runningClients.Add(Task.Run(() => HandleClient(found, handler), _cancellationToken));
+                _runningClients.Add(Task.Run(() => HandleClientAsync(found, handler), _cancellationToken));
 
                 _logger.LogInformation("Accepted TCP connection from {RemoteEndPoint}",
                     ((IPEndPoint)found.Client.RemoteEndPoint!).Port);
@@ -208,7 +217,7 @@ public class MainProcessDirector : ADirector
     /// <param name="handler"></param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    private async Task HandleClient(TcpClient client, IMainProcessHandler handler)
+    private async Task HandleClientAsync(TcpClient client, IMainProcessHandler handler)
     {
         var stream = client.GetStream();
 
@@ -275,9 +284,16 @@ public class MainProcessDirector : ADirector
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="MainProcessDirector"/> instance from the given service provider. This will attempt
+    /// to pull a logger and <see cref="SingleProcessSettings"/> from the service provider.
+    /// </summary>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
     public static MainProcessDirector Create(IServiceProvider serviceProvider)
     {
         return new MainProcessDirector(serviceProvider.GetRequiredService<ILogger<MainProcessDirector>>(),
             serviceProvider.GetRequiredService<SingleProcessSettings>());
     }
 }
+

@@ -35,8 +35,8 @@ public class ProxiedRenderer : IRenderer
         await _serializer.SendAndAckAsync(new Render {Renderable = renderable});
     }
 
-    public ValueTask ClearAsync()
+    public async ValueTask ClearAsync()
     {
-        throw new System.NotImplementedException();
+        await _serializer.SendAndAckAsync(new Clear());
     }
 }

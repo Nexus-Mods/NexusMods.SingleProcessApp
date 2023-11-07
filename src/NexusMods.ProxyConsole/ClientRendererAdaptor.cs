@@ -23,6 +23,13 @@ public class ClientRendererAdaptor
     private readonly Serializer _serializer;
     private readonly string[] _args;
 
+    /// <summary>
+    /// Constructs and adapter and starts forwarding commands from the duplexStream to the console. Arguments are
+    /// to be passed to the main process, they can be provided via the args parameter.
+    /// </summary>
+    /// <param name="duplexStream"></param>
+    /// <param name="renderer"></param>
+    /// <param name="args"></param>
     public ClientRendererAdaptor(Stream duplexStream, IRenderer renderer, string[]? args = null)
     {
         _stream = duplexStream;
@@ -32,6 +39,9 @@ public class ClientRendererAdaptor
         _args = args ?? Array.Empty<string>();
     }
 
+    /// <summary>
+    /// The task that is forwarding commands from the duplexStream to the console.
+    /// </summary>
     public Task RunningTask => _task;
 
     private async Task ForwardCommands()
@@ -46,6 +56,10 @@ public class ClientRendererAdaptor
                 {
                     case Render renderable:
                         await _renderer.RenderAsync(renderable.Renderable);
+                        await _serializer.AcknowledgeAsync();
+                        break;
+                    case Clear:
+                        await _renderer.ClearAsync();
                         await _serializer.AcknowledgeAsync();
                         break;
                     case ProgramArgumentsRequest:
@@ -66,16 +80,4 @@ public class ClientRendererAdaptor
             }
         }
     }
-
-    private void SendResponse(IMessage message)
-    {
-        Span<byte> sizeBuff = stackalloc byte[4];
-        var buff = MemoryPackSerializer.Serialize(message);
-        BitConverter.TryWriteBytes(sizeBuff, buff.Length);
-        _stream.Write(sizeBuff);
-        _stream.Write(buff);
-    }
-
-    public bool IsRunning { get; set; }
-
 }

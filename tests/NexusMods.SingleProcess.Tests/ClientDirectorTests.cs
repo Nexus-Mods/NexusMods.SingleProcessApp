@@ -44,7 +44,7 @@ public class ClientDirectorTests
         testConsole.Output.Should().Be("Hello World! - Some|Args|Here");
     }
 
-    public class EchoArgsHandler : IMainProcessHandler
+    private class EchoArgsHandler : IMainProcessHandler
     {
         private readonly ILogger _handlerLogger;
         private readonly TaskCompletionSource<string[]> _handled;
