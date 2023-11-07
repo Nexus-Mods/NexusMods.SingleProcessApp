@@ -14,10 +14,10 @@ public class AProxyConsoleTest : IAsyncLifetime
     private ClientRendererAdaptor? _client;
     protected IRenderer Server => _server!;
     private IRenderer? _server;
-    public AProxyConsoleTest()
+
+    protected AProxyConsoleTest()
     {
         (_serverStream, _clientStream) = FullDuplexStream.CreatePair();
-        LoggingRenderer renderer = new();
     }
 
     public async Task InitializeAsync()

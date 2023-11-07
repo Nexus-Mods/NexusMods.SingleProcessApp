@@ -1,22 +1,13 @@
-﻿using Spectre.Console;
-using Spectre.Console.Cli;
+﻿using NexusMods.ProxyConsole.Abstractions;
+using NexusMods.ProxyConsole.Implementations;
 
 namespace NexusMods.SingleProcess.TestApp.Commands;
 
-public class HelloWorld : AsyncCommand<HelloWorld.Settings>
+public class HelloWorld
 {
-    public class Settings : CommandSettings
+    public static async Task<int> ExecuteAsync(IRenderer renderer, string name)
     {
-        /// <summary>
-        /// The name to say hello to
-        /// </summary>
-        [CommandArgument(0, "[Name]")]
-        public string? Name { get; set; }
-    }
-
-    public override Task<int> ExecuteAsync(CommandContext context, Settings settings)
-    {
-        AnsiConsole.MarkupLine($"Hello [bold][blue]{settings.Name}[/][/]!");
-        return Task.FromResult(0);
+        await renderer.RenderAsync(new Text { Template = $"Hello {name}" });
+        return 0;
     }
 }

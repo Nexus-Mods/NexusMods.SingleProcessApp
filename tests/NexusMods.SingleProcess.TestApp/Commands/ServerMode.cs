@@ -1,22 +1,17 @@
-﻿using System.Diagnostics;
+﻿using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Parsing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NexusMods.ProxyConsole.Abstractions;
-using Spectre.Console;
-using Spectre.Console.Cli;
 
 namespace NexusMods.SingleProcess.TestApp.Commands;
 
-public class ServerMode : AsyncCommand<ServerMode.Settings>
+public class ServerMode
 {
     private readonly MainProcessDirector _director;
     private readonly IServiceProvider _provider;
     private readonly ILogger<ServerMode> _logger;
-
-    public class Settings : CommandSettings
-    {
-
-    }
 
     public ServerMode(ILogger<ServerMode> logger, MainProcessDirector director, IServiceProvider provider)
     {
@@ -26,7 +21,7 @@ public class ServerMode : AsyncCommand<ServerMode.Settings>
 
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+    public async Task<int> ExecuteAsync()
     {
         await _director.TryStartMain(new Handler(_provider));
 
@@ -51,13 +46,19 @@ class Handler : IMainProcessHandler
         _logger = provider.GetRequiredService<ILogger<Handler>>();
     }
 
-    public Task HandleAsync(string[] arguments, IRenderer console, CancellationToken token)
+    public async Task HandleAsync(string[] arguments, IRenderer console, CancellationToken token)
     {
         try
         {
-            Globals.SetConsole(console);
-            var app = _provider.GetRequiredService<CommandApp>();
-            await app.RunAsync(console, arguments);
+            _logger.LogInformation("Running command: {Arguments}", string.Join(' ', arguments));
+            var app = _provider.GetRequiredService<RootCommand>();
+            var builder = new CommandLineBuilder(app);
+            builder.AddMiddleware(async (ctx, next) =>
+            {
+                ctx.BindingContext.AddService(typeof(IRenderer), _ => console);
+                await next(ctx);
+            });
+            await builder.Build().InvokeAsync(arguments);
         }
         catch (Exception e)
         {

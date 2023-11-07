@@ -1,31 +1,22 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-
+﻿using System.CommandLine;
+using System.CommandLine.Binding;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexusMods.Paths;
 using NexusMods.ProxyConsole;
+using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.SingleProcess;
-using NexusMods.SingleProcess.TestApp;
 using NexusMods.SingleProcess.TestApp.Commands;
 using Spectre.Console;
-using Spectre.Console.Cli;
-using Progress = NexusMods.SingleProcess.TestApp.Commands.Progress;
 
 
 var host = Host.CreateDefaultBuilder()
     .ConfigureServices(s =>
     {
-        var registrar = new TypeRegistrar(s);
         s.AddLogging();
         s.AddSingleton<MainProcessDirector>();
         s.AddSingleton<ClientProcessDirector>();
-
-        s.AddSingleton<ScopedConsole>();
-
-        //s.Remove(s.First(d => d.ImplementationType == typeof(IAnsiConsole)));
-
 
         s.AddSingleton<SingleProcessSettings>(s =>
         {
@@ -35,21 +26,18 @@ var host = Host.CreateDefaultBuilder()
                 MainApplicationArgs = new[] { "server-mode" }
             };
         });
-        s.AddScoped<CommandApp>(s =>
-        {
-            var app = new CommandApp(registrar);
-            app.Configure(c =>
-            {
-                c.AddCommand<Progress>("progress");
-                c.AddCommand<ServerMode>("server-mode");
-                c.AddCommand<TextPrompt>("text-prompt");
-            });
-            return app;
-        });
 
+        s.AddSingleton<ServerMode>();
 
+        var rootCommand = new RootCommand();
+        var helloWorld = new Command("hello-world");
+        var option = new Option<string>("--name");
+        helloWorld.Add(option);
+        helloWorld.SetHandler(async (renderer, arg) => await HelloWorld.ExecuteAsync(renderer, arg), new RendererBinder(), option);
+        rootCommand.AddCommand(helloWorld);
 
-        s.AddScoped<IAnsiConsole>(provider => provider.GetRequiredService<ScopedConsole>().Console);
+        s.AddSingleton<RootCommand>(_ => rootCommand);
+
     }).Build();
 
 Console.OutputEncoding = Encoding.UTF8;
@@ -57,8 +45,8 @@ Console.OutputEncoding = Encoding.UTF8;
 if (args[0] == "server-mode")
 {
     using var scope = host.Services.CreateScope();
-    var app = scope.ServiceProvider.GetRequiredService<CommandApp>();
-    await app.RunAsync(args);
+    var app = scope.ServiceProvider.GetRequiredService<ServerMode>();
+    await app.ExecuteAsync();
 }
 else
 {
@@ -71,68 +59,10 @@ else
 }
 
 
-public sealed class TypeRegistrar : ITypeRegistrar
+class RendererBinder : BinderBase<IRenderer>
 {
-    private readonly IServiceCollection _builder;
-
-    public TypeRegistrar(IServiceCollection builder)
+    protected override IRenderer GetBoundValue(BindingContext bindingContext)
     {
-        _builder = builder;
-    }
-
-    public ITypeResolver Build()
-    {
-        return new TypeResolver(_builder.BuildServiceProvider());
-    }
-
-    public void Register(Type service, Type implementation)
-    {
-        _builder.AddSingleton(service, implementation);
-    }
-
-    public void RegisterInstance(Type service, object implementation)
-    {
-        _builder.AddSingleton(service, implementation);
-    }
-
-    public void RegisterLazy(Type service, Func<object> func)
-    {
-        if (service == typeof(IAnsiConsole))
-            return;
-
-        if (func is null)
-        {
-            throw new ArgumentNullException(nameof(func));
-        }
-
-        _builder.AddSingleton(service, (provider) => func());
-    }
-}
-
-public sealed class TypeResolver : ITypeResolver, IDisposable
-{
-    private readonly IServiceProvider _provider;
-
-    public TypeResolver(IServiceProvider provider)
-    {
-        _provider = provider ?? throw new ArgumentNullException(nameof(provider));
-    }
-
-    public object? Resolve(Type? type)
-    {
-        if (type == null)
-        {
-            return null;
-        }
-
-        return _provider.GetService(type);
-    }
-
-    public void Dispose()
-    {
-        if (_provider is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
+        return bindingContext.GetRequiredService<IRenderer>();
     }
 }
