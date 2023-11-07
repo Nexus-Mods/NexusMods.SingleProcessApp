@@ -1,37 +1,25 @@
 # NexusMods.App.SingleProcess
 
-This is a template repository for `NexusMods.App.*` repositories.
+## About
 
-## How to use
+This library allows an application to be run as a single process, with multiple windows (and fully multithreaded) while
+still allowing rich communication between the main process and the app's CLI.
 
-The following is a checklist of things you need to do after creating a new repository with this template.
+## Motivation
 
-1) Update the project settings:
-   1) `Settings` -> uncheck `Wikis` (under Features)
-   2) `Settings` -> check `Automatically delete head branches`
-   3) `Settings` -> `Collaborators and teams` -> `Add Teams`
-      - Add `NexusMods.App Admin` with role `Admin`
-      - Add `NexusMods.App Developers` with role `Maintain`
-      - Remove yourself as a collaborator
-   4) `Settings` -> `Rules` -> `Rulesets` and add a new one:
-      - Call it `Branch PR Rules`
-      - Add `Repository admin` to the `Bypass list`
-      - Add `Include default branch` as a target
-      - Only check the following branch protections:
-        - `Restrict deletions`
-        - `Require signed commits`
-        - `Require a pull request` before merging with **1** required approvals
-        - `Require status checks to pass before merging`
-        - `Block force pushes`
-   5) `Settings` -> `Pages` and change `Source` to **GitHub Actions**
-2) Rename the Solution and existing Projects
-3) Update the docs:
-    1) Open [`mkdocs.yml`](./mkdocs.yml) and update the first four fields:
-        - `site_name` and `site_url`
-        - `repo_name` and `repo_url`
-    2) Update the docs in [`docs`](./docs). At least change the [`index.md`](./docs/index.md) file.
+It became clear that the Nexus Mods App would benefit significantly from being a single process application, issues such
+as synchronisation of data between processes and message lag between windows were becoming a problem. This library attempts
+to solve these issues by providing a framework for a single process application, where the UI is run through a "Main" process
+and communication with the CLI is done through child processes connecting over IPC.
 
-Finally, update this README.
+Non-goals of this library include multiple implementations of the IPC system (everything uses localhost tcp for simplicity),
+and multiple CLI rendering/interaction techs. In this app the CLI is abstracted away and a default rendering implementation
+is provided for Spectre. This is where the "opinionated" part of the library comes in, it is designed to be used for apps
+structured in a similar way to the Nexus Mods App.
+
+## Docs
+
+More detailed documentation can be found [here](./docs/index.md)
 
 ## License
 
