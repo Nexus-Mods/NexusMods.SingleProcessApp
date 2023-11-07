@@ -36,6 +36,11 @@ public class ProxyTests : AProxyConsoleTest
     {
         await Server.RenderAsync(new Table
         {
+            Columns = new IRenderable[]
+            {
+                new Text {Template = "Text"},
+                new Text {Template = "Number"}
+            },
             Rows = new[]
             {
                 new IRenderable[] { new Text { Template = "Hello World!1" } , new Text { Template = "4" }},
@@ -49,6 +54,11 @@ public class ProxyTests : AProxyConsoleTest
             ("RenderAsync",
                 new Table
                 {
+                    Columns = new IRenderable[]
+                    {
+                        new Text {Template = "Text"},
+                        new Text {Template = "Number"}
+                    },
                     Rows = new[]
                     {
                         new IRenderable[] { new Text { Template = "Hello World!1" }, new Text { Template = "4" }},

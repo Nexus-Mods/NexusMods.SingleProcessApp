@@ -28,7 +28,7 @@ public class ClientDirectorTests
 
 
         var handler = new EchoArgsHandler(_logger);
-        await main.TryStartMain(handler);
+        await main.TryStartMainAsync(handler);
 
         var testConsole = new TestConsole();
 
