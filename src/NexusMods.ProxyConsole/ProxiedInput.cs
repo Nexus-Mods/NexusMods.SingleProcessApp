@@ -7,9 +7,9 @@ namespace NexusMods.ProxyConsole;
 
 public class ProxiedInput : IAnsiConsoleInput
 {
-    private readonly ServerSerializer _rpc;
+    private readonly Serializer _rpc;
 
-    public ProxiedInput(ServerSerializer rpc)
+    public ProxiedInput(Serializer rpc)
     {
         _rpc = rpc;
     }

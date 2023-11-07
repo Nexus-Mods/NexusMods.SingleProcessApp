@@ -23,7 +23,7 @@ public class ServerMode
 
     public async Task<int> ExecuteAsync()
     {
-        await _director.TryStartMain(new Handler(_provider));
+        await _director.TryStartMainAsync(new Handler(_provider));
 
         while (_director.IsListening)
         {

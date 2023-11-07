@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using MemoryPack;
+﻿using MemoryPack;
 using NexusMods.ProxyConsole.Abstractions;
-using Spectre.Console;
 
 namespace NexusMods.ProxyConsole.Implementations;
 
 [MemoryPackable]
 public partial class Table : IRenderable
 {
+    public required IRenderable[] Columns { get; init; }
     public required IRenderable[][] Rows { get; init; }
 }

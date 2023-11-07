@@ -20,14 +20,14 @@ public class ClientRendererAdaptor
     private readonly Stream _stream;
     private readonly Task _task;
     private readonly IRenderer _renderer;
-    private readonly ServerSerializer _serializer;
+    private readonly Serializer _serializer;
     private readonly string[] _args;
 
     public ClientRendererAdaptor(Stream duplexStream, IRenderer renderer, string[]? args = null)
     {
         _stream = duplexStream;
         _renderer = renderer;
-        _serializer = new ServerSerializer(duplexStream);
+        _serializer = new Serializer(duplexStream);
         _task = Task.Run(ForwardCommands);
         _args = args ?? Array.Empty<string>();
     }
@@ -40,16 +40,16 @@ public class ClientRendererAdaptor
         {
             try
             {
-                var msg = await _serializer.Receive();
+                var msg = await _serializer.ReceiveAsync();
 
                 switch (msg)
                 {
                     case Render renderable:
                         await _renderer.RenderAsync(renderable.Renderable);
-                        await _serializer.Acknowledge();
+                        await _serializer.AcknowledgeAsync();
                         break;
                     case ProgramArgumentsRequest:
-                        await _serializer.Send(new ProgramArgumentsResponse()
+                        await _serializer.SendAsync(new ProgramArgumentsResponse()
                         {
                             Arguments = _args
                         });

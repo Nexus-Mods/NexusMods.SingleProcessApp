@@ -54,7 +54,7 @@ public class MainProcessDirector : ADirector
     /// should attempt to connect via a ClientProcessDirector.
     /// </summary>
     /// <returns></returns>
-    public async Task<bool> TryStartMain(IMainProcessHandler handler)
+    public async Task<bool> TryStartMainAsync(IMainProcessHandler handler)
     {
         if (_cancellationToken.IsCancellationRequested)
             return false;
@@ -75,7 +75,7 @@ public class MainProcessDirector : ADirector
 
         _logger.LogInformation("No main process found, starting main process ({ProcessId})", Environment.ProcessId);
 
-        await StartTcpListener(handler);
+        await StartTcpListenerAsync(handler);
 
         // If someone else has already started the main process, then we should stop
         if (MainIsAlreadyRunning())
@@ -118,7 +118,7 @@ public class MainProcessDirector : ADirector
         return false;
     }
 
-    private async Task StartTcpListener(IMainProcessHandler handler)
+    private async Task StartTcpListenerAsync(IMainProcessHandler handler)
     {
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -147,6 +147,8 @@ public class MainProcessDirector : ADirector
         {
             try
             {
+                CleanClosedConnections();
+
                 if (ShouldExit())
                 {
                     _logger.LogInformation("No connections after {Seconds} seconds, exiting", Settings.StayRunningTimeout.TotalSeconds);
@@ -164,8 +166,6 @@ public class MainProcessDirector : ADirector
 
                 _logger.LogInformation("Accepted TCP connection from {RemoteEndPoint}",
                     ((IPEndPoint)found.Client.RemoteEndPoint!).Port);
-
-                CleanClosedConnections();
             }
             catch (OperationCanceledException)
             {

@@ -8,11 +8,11 @@ namespace NexusMods.ProxyConsole;
 
 public class ProxiedRenderer : IRenderer
 {
-    private readonly ServerSerializer _serializer;
+    private readonly Serializer _serializer;
 
-    private ProxiedRenderer(ServerSerializer serverSerializer)
+    private ProxiedRenderer(Serializer serializer)
     {
-        _serializer = serverSerializer;
+        _serializer = serializer;
     }
 
     /// <summary>
@@ -22,9 +22,9 @@ public class ProxiedRenderer : IRenderer
     /// <returns></returns>
     public static async Task<(string[] Arguments, IRenderer Renderer)> Create(Stream duplexStream)
     {
-        var renderer = new ProxiedRenderer(new ServerSerializer(duplexStream));
+        var renderer = new ProxiedRenderer(new Serializer(duplexStream));
 
-        var arguments = await renderer._serializer.SendAndReceive<ProgramArgumentsResponse, ProgramArgumentsRequest>
+        var arguments = await renderer._serializer.SendAndReceiveAsync<ProgramArgumentsResponse, ProgramArgumentsRequest>
             (new ProgramArgumentsRequest());
 
         return (arguments.Arguments, renderer);

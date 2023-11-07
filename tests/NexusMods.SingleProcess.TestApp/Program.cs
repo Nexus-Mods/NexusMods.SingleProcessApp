@@ -30,11 +30,18 @@ var host = Host.CreateDefaultBuilder()
         s.AddSingleton<ServerMode>();
 
         var rootCommand = new RootCommand();
+
         var helloWorld = new Command("hello-world");
         var option = new Option<string>("--name");
         helloWorld.Add(option);
         helloWorld.SetHandler(async (renderer, arg) => await HelloWorld.ExecuteAsync(renderer, arg), new RendererBinder(), option);
         rootCommand.AddCommand(helloWorld);
+
+        var guidTable = new Command("guid-table");
+        var countOption = new Option<int>("--count");
+        guidTable.Add(countOption);
+        guidTable.SetHandler(async (renderer, arg) => await GuidTable.ExecuteAsync(renderer, arg), new RendererBinder(), countOption);
+        rootCommand.AddCommand(guidTable);
 
         s.AddSingleton<RootCommand>(_ => rootCommand);
 
