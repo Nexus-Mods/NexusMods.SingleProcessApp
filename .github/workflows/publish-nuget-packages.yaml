@@ -22,7 +22,7 @@ jobs:
 
   publish:
     needs: get-version
-    uses: Nexus-Mods/NexusMods.App.Meta/.github/workflows/publish-nuget-packages.yaml@c22aee119490b79229eb3f8489d513e01a4e370a
+    uses: Nexus-Mods/NexusMods.App.Meta/.github/workflows/publish-nuget-packages.yaml@3d53438ed53888fa54892f5a3ea47bba0cbe0209
     with:
       version: ${{ needs.get-version.outputs.version }}
       use-nuget: true
