@@ -10,4 +10,4 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
-    uses: Nexus-Mods/NexusMods.App.Meta/.github/workflows/update-from-meta.yaml@fc9c9eae43a7c70eaa4d66b3717cd9cd35cc2bbb
+    uses: Nexus-Mods/NexusMods.App.Meta/.github/workflows/update-from-meta.yaml@c22aee119490b79229eb3f8489d513e01a4e370a

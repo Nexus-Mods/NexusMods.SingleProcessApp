@@ -7,6 +7,7 @@ public class GuidTable
 {
     public static async Task<int> ExecuteAsync(IRenderer renderer, int count)
     {
+        count = count == 0 ? 10 : count;
         var rows = new List<IRenderable[]>();
         for (var i = 0; i < count; i++)
         {

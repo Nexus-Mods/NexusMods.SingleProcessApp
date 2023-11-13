@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
@@ -26,6 +26,27 @@
         <PackageReference Remove="Xunit.DependencyInjection" />
         <PackageReference Remove="Xunit.DependencyInjection.SkippableFact" />
         <PackageReference Remove="Xunit.DependencyInjection.Logging" />
+        <PackageReference Update="JetBrains.Annotations" Version="2023.3.0" />
+        <PackageReference Update="Moq" Version="4.20.69" />
+        <PackageReference Update="AutoFixture" Version="4.18.0" />
+        <PackageReference Update="AutoFixture.AutoMoq" Version="4.18.0" />
+        <PackageReference Update="AutoFixture.Xunit2" Version="4.18.0" />
+        <PackageReference Update="FluentAssertions" Version="6.12.0" />
+        <PackageReference Update="FluentAssertions.Analyzers" Version="0.26.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Update="xunit" Version="2.6.1" />
+        <PackageReference Update="xunit.runner.visualstudio" Version="2.5.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Update="Xunit.SkippableFact" Version="1.4.13" />
+        <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        <PackageReference Update="GitHubActionsTestLogger" Version="2.3.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>

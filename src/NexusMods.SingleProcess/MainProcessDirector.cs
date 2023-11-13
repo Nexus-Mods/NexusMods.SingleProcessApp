@@ -33,7 +33,7 @@ public class MainProcessDirector : ADirector
     /// <param name="logger"></param>
     /// <param name="singleProcessSettings"></param>
     public MainProcessDirector(ILogger<MainProcessDirector> logger, SingleProcessSettings singleProcessSettings)
-        : base(singleProcessSettings)
+        : base(logger, singleProcessSettings)
     {
         _logger = logger;
         _cancellationTokenSource = new();
@@ -53,6 +53,7 @@ public class MainProcessDirector : ADirector
     /// <returns></returns>
     public async Task<bool> TryStartMainAsync(IMainProcessHandler handler)
     {
+        _logger.LogInformation("Main using SyncFile: {SyncFile}", Settings.SyncFile);
         if (_cancellationToken.IsCancellationRequested)
             return false;
 
@@ -262,7 +263,7 @@ public class MainProcessDirector : ADirector
         SharedArray?.CompareAndSwap(0, ourVal, 0);
 
         // Cancel the token first, so everything starts shutting down
-        _cancellationTokenSource.Cancel();
+        await _cancellationTokenSource.CancelAsync();
 
         // Wait for the listener to stop
         if (_listenerTask != null)

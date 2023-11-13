@@ -29,16 +29,6 @@ public class SingleProcessSettings
     public int PortMax { get; set; } = 20000;
 
     /// <summary>
-    /// The path to the main application, this is the application that will be started if it's not already running.
-    /// </summary>
-    public required AbsolutePath MainApplication { get; set; }
-
-    /// <summary>
-    /// The arguments to pass to the main application if it's not already running. This
-    /// </summary>
-    public required string[] MainApplicationArgs { get; set; } = Array.Empty<string>();
-
-    /// <summary>
     /// The amount of time the TCPListener will pause waiting for new connections before checking if it should exit.
     /// </summary>
     public TimeSpan ListenTimeout { get; set; } = TimeSpan.FromSeconds(5);
@@ -48,4 +38,8 @@ public class SingleProcessSettings
     /// </summary>
     public TimeSpan StayRunningTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
+    /// <summary>
+    /// The amount of time the client process will wait for the main process to start before giving up.
+    /// </summary>
+    public TimeSpan ClientConnectTimeout { get; set; } = TimeSpan.FromSeconds(15);
 }

@@ -2,19 +2,21 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace NexusMods.SingleProcess;
 
-public abstract class ADirector : IAsyncDisposable, IDisposable
+public abstract class ADirector(ILogger logger, SingleProcessSettings settings) : IAsyncDisposable, IDisposable
 {
-    protected readonly SingleProcessSettings Settings;
+    /// <summary>
+    /// The single process settings
+    /// </summary>
+    protected readonly SingleProcessSettings Settings = settings;
+
+    /// <summary>
+    /// The shared sync array;
+    /// </summary>
     protected ISharedArray? SharedArray;
-
-    protected ADirector(SingleProcessSettings settings)
-    {
-        Settings = settings;
-    }
-
 
     /// <inheritdoc />
     public abstract ValueTask DisposeAsync();
@@ -56,6 +58,9 @@ public abstract class ADirector : IAsyncDisposable, IDisposable
         }
     }
 
+    /// <summary>
+    /// Sync version of the dispose method
+    /// </summary>
     public void Dispose()
     {
         if (this is IAsyncDisposable ad)

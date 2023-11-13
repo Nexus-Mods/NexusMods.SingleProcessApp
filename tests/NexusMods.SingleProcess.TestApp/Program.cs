@@ -1,8 +1,11 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Binding;
+using System.CommandLine.Builder;
+using System.CommandLine.Parsing;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using NexusMods.Paths;
 using NexusMods.ProxyConsole;
 using NexusMods.ProxyConsole.Abstractions;
@@ -15,19 +18,14 @@ var host = Host.CreateDefaultBuilder()
     .ConfigureServices(s =>
     {
         s.AddLogging();
+        s.AddFileSystem();
         s.AddSingleton<MainProcessDirector>();
         s.AddSingleton<ClientProcessDirector>();
+        s.AddSingleton<StartupDirector>();
 
-        s.AddSingleton<SingleProcessSettings>(s =>
-        {
-            return new SingleProcessSettings
-            {
-                MainApplication = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory),
-                MainApplicationArgs = new[] { "server-mode" }
-            };
-        });
+        s.AddSingleton<IStartupHandler, Handler>();
 
-        s.AddSingleton<ServerMode>();
+        s.AddSingleton<SingleProcessSettings>();
 
         var rootCommand = new RootCommand();
 
@@ -49,22 +47,8 @@ var host = Host.CreateDefaultBuilder()
 
 Console.OutputEncoding = Encoding.UTF8;
 
-if (args[0] == "server-mode")
-{
-    using var scope = host.Services.CreateScope();
-    var app = scope.ServiceProvider.GetRequiredService<ServerMode>();
-    await app.ExecuteAsync();
-}
-else
-{
-    var client = host.Services.GetRequiredService<ClientProcessDirector>();
-    await client.StartClient(new ConsoleSettings
-    {
-        Arguments = args,
-        Renderer = new SpectreRenderer(AnsiConsole.Console)
-    });
-}
-
+var startupDirector = host.Services.GetRequiredService<StartupDirector>();
+return await startupDirector.Start(args);
 
 class RendererBinder : BinderBase<IRenderer>
 {
@@ -72,4 +56,35 @@ class RendererBinder : BinderBase<IRenderer>
     {
         return bindingContext.GetRequiredService<IRenderer>();
     }
+}
+
+class Handler(ILogger<Handler> logger, IFileSystem fileSystem, IServiceProvider provider) : AStartupHandler(logger, fileSystem)
+{
+    public override async Task<int> HandleCliCommandAsync(string[] args, IRenderer renderer, CancellationToken token)
+    {
+        try
+        {
+            logger.LogInformation("Running command: {Arguments}", string.Join(' ', args));
+            var app = provider.GetRequiredService<RootCommand>();
+            var builder = new CommandLineBuilder(app);
+            builder.AddMiddleware(async (ctx, next) =>
+            {
+                ctx.BindingContext.AddService(typeof(IRenderer), _ => renderer);
+                await next(ctx);
+            });
+            return await builder.Build().InvokeAsync(args);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error running command");
+            return -1;
+        }
+    }
+
+    public override Task<int> StartUiWindowAsync()
+    {
+        logger.LogInformation("Starting UI window");
+        return Task.FromResult(0);
+    }
+    public override string MainProcessArgument => "main-process";
 }

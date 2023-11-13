@@ -62,20 +62,13 @@ public unsafe class MultiProcessSharedArray : ISharedArray
 
         _stream = path.Open(FileMode.Open, FileAccess.ReadWrite);
 
-        #if !WINDOWS
-        // On non-Windows platforms we can use the standard MemoryMappedFile API
         _mmapFile = MemoryMappedFile.CreateFromFile((FileStream)_stream,
             null,
             _totalSize,
             MemoryMappedFileAccess.ReadWrite,
             HandleInheritability.Inheritable,
             false);
-        #else
-        var name = path.GetFullPath().ToLower().XxHash64AsUtf8().ToHex();
-        // On Windows we have to use this Windows-only API because Win32 freaks out
-        // if you try to open a file that's already open.
-        _mmapFile = MemoryMappedFile.CreateOrOpen(name, _totalSize);
-        #endif
+
         _view = _mmapFile.CreateViewAccessor(0, _totalSize, MemoryMappedFileAccess.ReadWrite);
     }
 
