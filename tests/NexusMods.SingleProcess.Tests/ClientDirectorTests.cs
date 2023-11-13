@@ -33,7 +33,7 @@ public class ClientDirectorTests
         var testConsole = new TestConsole();
 
 
-        await client.StartClient(new ConsoleSettings
+        await client.StartClientAsync(new ConsoleSettings
         {
             Arguments = new[] {"Some", "Args", "Here"},
             Renderer = new SpectreRenderer(testConsole)
@@ -44,21 +44,15 @@ public class ClientDirectorTests
         testConsole.Output.Should().Be("Hello World! - Some|Args|Here");
     }
 
-    private class EchoArgsHandler : IMainProcessHandler
+    private class EchoArgsHandler(ILogger logger) : IMainProcessHandler
     {
-        private readonly ILogger _handlerLogger;
-        private readonly TaskCompletionSource<string[]> _handled;
+        private readonly TaskCompletionSource<string[]> _handled = new();
 
         public Task<string[]> Handled => _handled.Task;
 
-        public EchoArgsHandler(ILogger logger)
-        {
-            _handlerLogger = logger;
-            _handled = new TaskCompletionSource<string[]>();
-        }
         public async Task HandleAsync(string[] arguments, IRenderer console, CancellationToken token)
         {
-            _handlerLogger.LogInformation("Received {Count} arguments", arguments.Length);
+            logger.LogInformation("Received {Count} arguments", arguments.Length);
             await console.RenderAsync(new Text { Template = $"Hello World! - {string.Join('|', arguments)}" });
             _handled.SetResult(arguments);
         }

@@ -12,18 +12,22 @@ using NexusMods.ProxyConsole;
 
 namespace NexusMods.SingleProcess;
 
-public class ClientProcessDirector : ADirector
+/// <summary>
+/// A director that will connect to the main process and connect the console to it
+/// </summary>
+public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, SingleProcessSettings settings)
+    : ADirector(logger, settings)
 {
-    private readonly ILogger<ClientProcessDirector> _logger;
     private TcpClient? _client;
     private NetworkStream? _stream;
 
-    public ClientProcessDirector(ILogger<ClientProcessDirector> logger, SingleProcessSettings settings) : base(settings)
-    {
-        _logger = logger;
-    }
-
-    public async Task StartClient(ConsoleSettings proxy)
+    /// <summary>
+    /// Starts the client process, connecting to the main process and running the console response loop
+    /// </summary>
+    /// <param name="proxy"></param>
+    /// <exception cref="InvalidDataException"></exception>
+    /// <exception cref="SocketException"></exception>
+    public async Task StartClientAsync(ConsoleSettings proxy)
     {
         ConnectSharedArray();
 
@@ -33,7 +37,7 @@ public class ClientProcessDirector : ADirector
             throw new InvalidDataException("No main process is started");
         }
 
-        _logger.LogInformation("Found main process {ProcessId} listening on port {Port}", process.Id, port);
+        logger.LogInformation("Found main process {ProcessId} listening on port {Port}", process.Id, port);
 
         _client = new TcpClient();
         try
@@ -41,17 +45,17 @@ public class ClientProcessDirector : ADirector
             await _client.ConnectAsync(IPAddress.Loopback, port);
             _stream = _client.GetStream();
 
-            _logger.LogDebug("Connected to main process {ProcessId} on port {Port}", process.Id, port);
-            await RunTillClose(proxy);
+            logger.LogDebug("Connected to main process {ProcessId} on port {Port}", process.Id, port);
+            await RunTillCloseAsync(proxy);
         }
         catch (SocketException ex)
         {
-            _logger.LogWarning("Failed to connect to main process {ProcessId} on port {Port}", process.Id, port);
+            logger.LogWarning("Failed to connect to main process {ProcessId} on port {Port}", process.Id, port);
             throw ex;
         }
     }
 
-    private async Task RunTillClose(ConsoleSettings proxy)
+    private async Task RunTillCloseAsync(ConsoleSettings proxy)
     {
         try
         {
@@ -60,30 +64,24 @@ public class ClientProcessDirector : ADirector
         }
         catch (IOException ex)
         {
-            _logger.LogDebug(ex, "Client disconnected");
+            logger.LogDebug(ex, "Client disconnected");
         }
     }
 
-    /*
-    private async Task SendStartupInfo(ProxiedConsole proxy)
-    {
-        await using var binaryWriter = new BinaryWriter(_stream!, Encoding.UTF8, true);
-        foreach (var arg in proxy.Args)
-        {
-            binaryWriter.Write(proxy.Args.Length);
-            binaryWriter.Write(arg);
-        }
-        binaryWriter.Flush();
-    }
-    */
-
-
+    /// <summary>
+    /// Async dispose
+    /// </summary>
     public override async ValueTask DisposeAsync()
     {
         _client?.Dispose();
         SharedArray?.Dispose();
     }
 
+    /// <summary>
+    /// Creates a new instance of <see cref="ClientProcessDirector"/>
+    /// </summary>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
     public static ClientProcessDirector Create(IServiceProvider serviceProvider)
     {
         return new ClientProcessDirector(serviceProvider.GetRequiredService<ILogger<ClientProcessDirector>>(),

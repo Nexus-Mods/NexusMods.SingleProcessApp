@@ -12,11 +12,7 @@ public class Startup
         container
             .AddSingleton<MainProcessDirector>()
             .AddSingleton<ClientProcessDirector>()
-            .AddSingleton<SingleProcessSettings>(_ => new SingleProcessSettings
-            {
-                MainApplication = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory),
-                MainApplicationArgs = new [] {"main-process"},
-            })
+            .AddSingleton<SingleProcessSettings>()
             .AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug))
             .AddLogging(builder => builder.AddXunitOutput());
 
