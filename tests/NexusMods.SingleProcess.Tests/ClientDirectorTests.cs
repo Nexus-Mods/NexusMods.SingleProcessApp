@@ -7,27 +7,16 @@ using Spectre.Console.Testing;
 
 namespace NexusMods.SingleProcess.Tests;
 
-public class ClientDirectorTests
+public class ClientDirectorTests(ILogger<ClientProcessDirector> logger, IServiceProvider serviceProvider)
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<ClientProcessDirector> _logger;
-
-    public ClientDirectorTests(ILogger<ClientProcessDirector> logger, IServiceProvider serviceProvider)
-    {
-        _logger = logger;
-        _serviceProvider = serviceProvider;
-    }
-
-
-
     [Fact]
     public async Task CanRoundtripData()
     {
-        await using var main = MainProcessDirector.Create(_serviceProvider);
-        await using var client = ClientProcessDirector.Create(_serviceProvider);
+        await using var main = MainProcessDirector.Create(serviceProvider);
+        await using var client = ClientProcessDirector.Create(serviceProvider);
 
 
-        var handler = new EchoArgsHandler(_logger);
+        var handler = new EchoArgsHandler(logger);
         await main.TryStartMainAsync(handler);
 
         var testConsole = new TestConsole();

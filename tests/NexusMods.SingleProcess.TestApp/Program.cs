@@ -72,8 +72,7 @@ class Handler(ILogger<Handler> logger, IFileSystem fileSystem, IServiceProvider 
                 ctx.BindingContext.AddService(typeof(IRenderer), _ => renderer);
                 await next(ctx);
             });
-            await builder.Build().InvokeAsync(args);
-            return 0;
+            return await builder.Build().InvokeAsync(args);
         }
         catch (Exception e)
         {
