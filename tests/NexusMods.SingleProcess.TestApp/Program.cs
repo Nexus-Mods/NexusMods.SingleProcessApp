@@ -28,6 +28,7 @@ var host = Host.CreateDefaultBuilder()
         s.AddSingleton<IStartupHandler, Handler>();
 
         s.AddSingleton<SingleProcessSettings>();
+        s.AddDefaultParsers();
 
         s.AddVerb(typeof(Verbs).GetMethod(nameof(Verbs.HelloWorld))!);
         s.AddVerb(typeof(Verbs).GetMethod(nameof(Verbs.GuidTable))!);
@@ -38,7 +39,7 @@ var host = Host.CreateDefaultBuilder()
 Console.OutputEncoding = Encoding.UTF8;
 
 var startupDirector = host.Services.GetRequiredService<StartupDirector>();
-return await startupDirector.Start(args);
+return await startupDirector.Start(args, true);
 
 
 static class Verbs

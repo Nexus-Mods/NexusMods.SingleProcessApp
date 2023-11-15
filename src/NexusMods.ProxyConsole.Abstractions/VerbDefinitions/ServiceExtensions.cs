@@ -66,4 +66,42 @@ public static class ServiceExtensions
         return services.AddSingleton(_ => new VerbDefinition(verbDefinition.Name, verbDefinition!.Description, info, options.ToArray()));
 
     }
+
+    /// <summary>
+    /// Adds a custom option parser for a given type.
+    /// </summary>
+    /// <param name="collection"></param>
+    /// <typeparam name="TVal"></typeparam>
+    /// <typeparam name="TParser"></typeparam>
+    /// <returns></returns>
+    public static IServiceCollection AddOptionParser<TVal, TParser>(this IServiceCollection collection)
+        where TParser : class, IOptionParser<TVal>
+    {
+        return collection.AddSingleton<IOptionParser<TVal>, TParser>();
+    }
+
+    /// <summary>
+    /// Registers a custom option parser for a given type.
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="parser"></param>
+    /// <typeparam name="TVal"></typeparam>
+    /// <returns></returns>
+    public static IServiceCollection AddOptionParser<TVal>(this IServiceCollection services, Func<string, (TVal? Value, string? Error)> parser)
+    {
+        return services.AddSingleton<IOptionParser<TVal>>(new DelegateParser<TVal>(parser));
+    }
+
+    /// <summary>
+    /// Adds the default parsers for boolean, integer and string.
+    /// </summary>
+    /// <param name="collection"></param>
+    /// <returns></returns>
+    public static IServiceCollection AddDefaultParsers(this IServiceCollection collection)
+    {
+        collection.AddOptionParser<bool>(s => bool.TryParse("true", out var b) ? (b, null) : (default, "Invalid boolean"));
+        collection.AddOptionParser<int>(s => int.TryParse(s, out var i) ? (i, null) : (default, "Invalid integer"));
+        collection.AddOptionParser<string>(s => (s, null));
+        return collection;
+    }
 }

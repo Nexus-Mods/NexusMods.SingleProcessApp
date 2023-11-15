@@ -24,6 +24,7 @@ public class CommandLineConfigurator
     private readonly RootCommand _rootCommand;
     private readonly Type[] _injectedTypes;
     private readonly IServiceProvider _provider;
+    private readonly MethodInfo _makeOptionMethod;
 
     /// <summary>
     /// DI constructor
@@ -32,6 +33,7 @@ public class CommandLineConfigurator
     /// <param name="verbDefinitions"></param>
     public CommandLineConfigurator(IServiceProvider provider, IEnumerable<VerbDefinition> verbDefinitions)
     {
+        _makeOptionMethod = GetType().GetMethod(nameof(MakeOption), BindingFlags.Instance | BindingFlags.NonPublic)!;
         (_rootCommand, _injectedTypes) = MakeRootCommand(verbDefinitions);
         _provider = provider;
     }
@@ -61,10 +63,8 @@ public class CommandLineConfigurator
                 }
                 else
                 {
-                    var optionType = typeof(Option<>).MakeGenericType(optionDefinition.Type);
-
-                    var aliases = new[] { "-" + optionDefinition.ShortName, "--" + optionDefinition.LongName };
-                    var option = (Option)Activator.CreateInstance(optionType, aliases, optionDefinition.HelpText)!;
+                    var option = (Option)_makeOptionMethod.MakeGenericMethod(optionDefinition.Type)
+                        .Invoke(this, new[] { optionDefinition })!;
                     command.AddOption(option);
                     getters.Add(ctx => ctx.ParseResult.GetValueForOption(option));
                 }
@@ -76,6 +76,26 @@ public class CommandLineConfigurator
         return (rootCommand, injectedTypes.ToArray());
     }
 
+    private Option MakeOption<T>(OptionDefinition optionDefinition)
+    {
+        var aliases = new[] { "-" + optionDefinition.ShortName, "--" + optionDefinition.LongName };
+
+        ParseArgument<T> parser = result =>
+        {
+            var service = _provider.GetService<IOptionParser<T>>();
+            if (service == null)
+                return default!;
+            if (service.TryParse(result.Tokens.Single().Value, out var itm, out var error))
+                return itm;
+            result.ErrorMessage = error;
+            return default!;
+
+        };
+
+        var option = new Option<T>(aliases, parser, false, optionDefinition.HelpText);
+        return option;
+    }
+
     /// <summary>
     /// Runs the commandline parser and executes the verb using the given renderer and arguments.
     /// </summary>
@@ -84,6 +104,7 @@ public class CommandLineConfigurator
     /// <returns></returns>
     public async Task<int> RunAsync(string[] args, IRenderer renderer)
     {
+
         var parser = new CommandLineBuilder(_rootCommand)
             .AddMiddleware((ctx, next) =>
             {
