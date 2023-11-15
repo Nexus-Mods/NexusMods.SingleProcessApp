@@ -14,6 +14,20 @@ namespace NexusMods.ProxyConsole.Abstractions.VerbDefinitions;
 public static class ServiceExtensions
 {
     /// <summary>
+    /// Helper method for registering a verb via .AddVerb(() => SomeClass.SomeMethod);
+    /// </summary>
+    /// <param name="coll"></param>
+    /// <param name="fn"></param>
+    /// <returns></returns>
+    public static IServiceCollection AddVerb(this IServiceCollection coll, Expression<Func<Delegate>> fn)
+    {
+        var methodInfo = (MethodInfo)((ConstantExpression)((MethodCallExpression)((UnaryExpression)fn.Body).Operand).Object!)
+            ?.Value!;
+        return coll.AddVerb(methodInfo);
+    }
+
+
+    /// <summary>
     /// Registers a method as a CLI verb. The method must be static and have a return type of
     /// Task&lt;int&gt;.
     /// </summary>

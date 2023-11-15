@@ -30,8 +30,8 @@ var host = Host.CreateDefaultBuilder()
         s.AddSingleton<SingleProcessSettings>();
         s.AddDefaultParsers();
 
-        s.AddVerb(typeof(Verbs).GetMethod(nameof(Verbs.HelloWorld))!);
-        s.AddVerb(typeof(Verbs).GetMethod(nameof(Verbs.GuidTable))!);
+        s.AddVerb(() => Verbs.HelloWorld);
+        s.AddVerb(() => Verbs.GuidTable);
         s.AddSingleton<CommandLineConfigurator>();
 
     }).Build();
