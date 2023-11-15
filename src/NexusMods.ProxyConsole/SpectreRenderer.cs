@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Spectre.Console;
 using Abstractions = NexusMods.ProxyConsole.Abstractions;
-using Impl = NexusMods.ProxyConsole.Implementations;
+using Impl = NexusMods.ProxyConsole.Abstractions.Implementations;
 using Render = Spectre.Console.Rendering;
 
 namespace NexusMods.ProxyConsole;
@@ -35,8 +35,8 @@ public class SpectreRenderer : Abstractions.IRenderer
     {
         return renderable switch
         {
-            Implementations.Text text => new Text(string.Format(text.Template, text.Arguments)),
-            Implementations.Table table => await ToSpectreAsync(table),
+            Impl.Text text => new Text(string.Format(text.Template, text.Arguments)),
+            Impl.Table table => await ToSpectreAsync(table),
             _ => throw new NotImplementedException()
         };
     }

@@ -1,5 +1,5 @@
 ﻿using NexusMods.ProxyConsole;
-using NexusMods.ProxyConsole.Implementations;
+using NexusMods.ProxyConsole.Abstractions.Implementations;
 using Spectre.Console.Testing;
 
 namespace NexusMods.Spectre.ProxyConsole.Tests;

@@ -1,5 +1,5 @@
 ﻿using NexusMods.ProxyConsole.Abstractions;
-using NexusMods.ProxyConsole.Implementations;
+using NexusMods.ProxyConsole.Abstractions.Implementations;
 
 namespace NexusMods.SingleProcess.TestApp.Commands;
 

@@ -2,7 +2,7 @@
 using MemoryPack;
 using NexusMods.ProxyConsole.Abstractions;
 
-namespace NexusMods.ProxyConsole.Implementations;
+namespace NexusMods.ProxyConsole.Abstractions.Implementations;
 
 /// <summary>
 /// A text renderable.

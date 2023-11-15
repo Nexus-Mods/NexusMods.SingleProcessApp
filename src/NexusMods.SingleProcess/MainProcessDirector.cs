@@ -25,6 +25,7 @@ public class MainProcessDirector : ADirector
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
     private readonly DateTime _lastConnection;
+    private readonly IServiceProvider _provider;
 
     /// <summary>
     /// The director for the main process, this is responsible for starting the main process, and setting up the TCP Listener
@@ -32,10 +33,11 @@ public class MainProcessDirector : ADirector
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="singleProcessSettings"></param>
-    public MainProcessDirector(ILogger<MainProcessDirector> logger, SingleProcessSettings singleProcessSettings)
+    public MainProcessDirector(ILogger<MainProcessDirector> logger, SingleProcessSettings singleProcessSettings, IServiceProvider provider)
         : base(logger, singleProcessSettings)
     {
         _logger = logger;
+        _provider = provider;
         _cancellationTokenSource = new();
         _cancellationToken = _cancellationTokenSource.Token;
         _lastConnection = DateTime.UtcNow;
@@ -222,7 +224,7 @@ public class MainProcessDirector : ADirector
     {
         var stream = client.GetStream();
 
-        var (arguments, renderer) = await ProxiedRenderer.Create(stream);
+        var (arguments, renderer) = await ProxiedRenderer.Create(_provider, stream);
         await handler.HandleAsync(arguments, renderer, _cancellationToken);
 
         client.Dispose();
@@ -294,7 +296,8 @@ public class MainProcessDirector : ADirector
     public static MainProcessDirector Create(IServiceProvider serviceProvider)
     {
         return new MainProcessDirector(serviceProvider.GetRequiredService<ILogger<MainProcessDirector>>(),
-            serviceProvider.GetRequiredService<SingleProcessSettings>());
+            serviceProvider.GetRequiredService<SingleProcessSettings>(),
+            serviceProvider);
     }
 }
 

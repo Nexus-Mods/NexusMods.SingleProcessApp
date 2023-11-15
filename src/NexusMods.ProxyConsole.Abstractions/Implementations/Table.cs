@@ -1,7 +1,7 @@
 ﻿using MemoryPack;
 using NexusMods.ProxyConsole.Abstractions;
 
-namespace NexusMods.ProxyConsole.Implementations;
+namespace NexusMods.ProxyConsole.Abstractions.Implementations;
 
 [MemoryPackable]
 public partial class Table : IRenderable

@@ -5,7 +5,7 @@
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="MemoryPack.Streaming" Version="1.10.0" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
       <PackageReference Include="Nerdbank.Streams" Version="2.10.72" />
       <PackageReference Include="NexusMods.Paths" Version="0.1.8" />
       <PackageReference Include="Spectre.Console" Version="0.47.0" />

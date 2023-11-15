@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using MemoryPack;
 using MemoryPack.Streaming;
+using Microsoft.Extensions.DependencyInjection;
 using Nerdbank.Streams;
 using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.ProxyConsole.Messages;
@@ -30,11 +32,11 @@ public class ClientRendererAdaptor
     /// <param name="duplexStream"></param>
     /// <param name="renderer"></param>
     /// <param name="args"></param>
-    public ClientRendererAdaptor(Stream duplexStream, IRenderer renderer, string[]? args = null)
+    public ClientRendererAdaptor(Stream duplexStream, IRenderer renderer, IServiceProvider provider, string[]? args = null)
     {
         _stream = duplexStream;
         _renderer = renderer;
-        _serializer = new Serializer(duplexStream);
+        _serializer = new Serializer(duplexStream, provider.GetRequiredService<IEnumerable<IRenderableDefinition>>());
         _task = Task.Run(ForwardCommands);
         _args = args ?? Array.Empty<string>();
     }

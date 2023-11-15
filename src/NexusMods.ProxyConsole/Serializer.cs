@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MemoryPack;
+using MemoryPack.Formatters;
 using MemoryPack.Streaming;
 using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.ProxyConsole.Exceptions;
@@ -27,12 +30,25 @@ public class Serializer
     /// Primary constructor, takes a duplex capable stream
     /// </summary>
     /// <param name="duplexStream"></param>
-    public Serializer(Stream duplexStream)
+    public Serializer(Stream duplexStream, IEnumerable<IRenderableDefinition> renderableDefinitions)
     {
         _stream = duplexStream;
         _binaryWriter = new BinaryWriter(_stream, Encoding.UTF8, true);
         _binaryReader = new BinaryReader(_stream, Encoding.UTF8, true);
         _memoryPool = MemoryPool<byte>.Shared;
+
+        if (!MemoryPackFormatterProvider.IsRegistered<IRenderable>())
+        {
+            // In the future we *could* redo this to use the guid as a tag, but since all this data is
+            // ephemeral, it doesn't matter for now.
+            var listDefs = renderableDefinitions
+                .OrderBy(l => l.Id)
+                .Select((def, idx) => ((ushort)idx, def.RenderableType));
+
+            MemoryPackFormatterProvider.Register(new DynamicUnionFormatter<IRenderable>(listDefs.ToArray()));
+        }
+
+
     }
 
 

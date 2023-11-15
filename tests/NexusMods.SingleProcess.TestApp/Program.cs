@@ -19,9 +19,8 @@ var host = Host.CreateDefaultBuilder()
     {
         s.AddLogging();
         s.AddFileSystem();
-        s.AddSingleton<MainProcessDirector>();
-        s.AddSingleton<ClientProcessDirector>();
-        s.AddSingleton<StartupDirector>();
+        s.AddSingleProcess((_, s) => s);
+        s.AddDefaultRenderers();
 
         s.AddSingleton<IStartupHandler, Handler>();
 
