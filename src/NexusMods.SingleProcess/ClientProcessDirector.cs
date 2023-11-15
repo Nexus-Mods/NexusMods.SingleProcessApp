@@ -2,12 +2,9 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nerdbank.Streams;
 using NexusMods.ProxyConsole;
 
 namespace NexusMods.SingleProcess;
@@ -48,10 +45,10 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
             logger.LogDebug("Connected to main process {ProcessId} on port {Port}", process.Id, port);
             await RunTillCloseAsync(proxy);
         }
-        catch (SocketException ex)
+        catch (SocketException)
         {
             logger.LogWarning("Failed to connect to main process {ProcessId} on port {Port}", process.Id, port);
-            throw ex;
+            throw;
         }
     }
 
@@ -71,10 +68,11 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
     /// <summary>
     /// Async dispose
     /// </summary>
-    public override async ValueTask DisposeAsync()
+    public override ValueTask DisposeAsync()
     {
         _client?.Dispose();
         SharedArray?.Dispose();
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
