@@ -2,6 +2,7 @@
 using System.CommandLine.Binding;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
+using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,9 +10,11 @@ using Microsoft.Extensions.Logging;
 using NexusMods.Paths;
 using NexusMods.ProxyConsole;
 using NexusMods.ProxyConsole.Abstractions;
+using NexusMods.ProxyConsole.Abstractions.Implementations;
+using NexusMods.ProxyConsole.Abstractions.VerbDefinitions;
 using NexusMods.SingleProcess;
 using NexusMods.SingleProcess.TestApp.Commands;
-using Spectre.Console;
+using Text = NexusMods.ProxyConsole.Abstractions.Implementations.Text;
 
 
 var host = Host.CreateDefaultBuilder()
@@ -19,29 +22,16 @@ var host = Host.CreateDefaultBuilder()
     {
         s.AddLogging();
         s.AddFileSystem();
-        s.AddSingleton<MainProcessDirector>();
-        s.AddSingleton<ClientProcessDirector>();
-        s.AddSingleton<StartupDirector>();
+        s.AddSingleProcess((_, s) => s);
+        s.AddDefaultRenderers();
 
         s.AddSingleton<IStartupHandler, Handler>();
 
         s.AddSingleton<SingleProcessSettings>();
 
-        var rootCommand = new RootCommand();
-
-        var helloWorld = new Command("hello-world");
-        var option = new Option<string>("--name");
-        helloWorld.Add(option);
-        helloWorld.SetHandler(async (renderer, arg) => await HelloWorld.ExecuteAsync(renderer, arg), new RendererBinder(), option);
-        rootCommand.AddCommand(helloWorld);
-
-        var guidTable = new Command("guid-table");
-        var countOption = new Option<int>("--count");
-        guidTable.Add(countOption);
-        guidTable.SetHandler(async (renderer, arg) => await GuidTable.ExecuteAsync(renderer, arg), new RendererBinder(), countOption);
-        rootCommand.AddCommand(guidTable);
-
-        s.AddSingleton<RootCommand>(_ => rootCommand);
+        s.AddVerb(typeof(Verbs).GetMethod(nameof(Verbs.HelloWorld))!);
+        s.AddVerb(typeof(Verbs).GetMethod(nameof(Verbs.GuidTable))!);
+        s.AddSingleton<CommandLineConfigurator>();
 
     }).Build();
 
@@ -50,11 +40,43 @@ Console.OutputEncoding = Encoding.UTF8;
 var startupDirector = host.Services.GetRequiredService<StartupDirector>();
 return await startupDirector.Start(args);
 
-class RendererBinder : BinderBase<IRenderer>
+
+static class Verbs
 {
-    protected override IRenderer GetBoundValue(BindingContext bindingContext)
+
+    [Verb("hello-world", "Prints 'Hello, {name}!'")]
+    public static async Task<int> HelloWorld([Injected] IRenderer renderer,
+        [Option("n", "name", "The name to greet")]
+        string name)
     {
-        return bindingContext.GetRequiredService<IRenderer>();
+        await renderer.RenderAsync(new Text { Template = $"Hello, [bold]{name}[/]!" });
+        return 0;
+    }
+
+
+    [Verb("guid-table", "Prints a table of guids to test the table renderer")]
+    public static async Task<int> GuidTable([Injected] IRenderer renderer,
+        [Option("c", "count", "The name to greet")]
+        int count)
+    {
+        count = count == 0 ? 10 : count;
+        var rows = new List<IRenderable[]>();
+        for (var i = 0; i < count; i++)
+        {
+            rows.Add(new IRenderable[]
+                { new Text { Template = i.ToString() }, new Text { Template = Guid.NewGuid().ToString() } });
+        }
+
+        await renderer.RenderAsync(new Table
+        {
+            Columns = new IRenderable[]
+            {
+                new Text { Template = "Index" },
+                new Text { Template = "Guid" }
+            },
+            Rows = rows.ToArray()
+        });
+        return 0;
     }
 }
 
@@ -65,14 +87,8 @@ class Handler(ILogger<Handler> logger, IFileSystem fileSystem, IServiceProvider 
         try
         {
             logger.LogInformation("Running command: {Arguments}", string.Join(' ', args));
-            var app = provider.GetRequiredService<RootCommand>();
-            var builder = new CommandLineBuilder(app);
-            builder.AddMiddleware(async (ctx, next) =>
-            {
-                ctx.BindingContext.AddService(typeof(IRenderer), _ => renderer);
-                await next(ctx);
-            });
-            return await builder.Build().InvokeAsync(args);
+            var configurator = provider.GetRequiredService<CommandLineConfigurator>();
+            return await configurator.RunAsync(args, renderer);
         }
         catch (Exception e)
         {

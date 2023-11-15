@@ -25,7 +25,6 @@
         </PackageReference>
         <PackageReference Remove="Xunit.DependencyInjection" />
         <PackageReference Remove="Xunit.DependencyInjection.SkippableFact" />
-        <PackageReference Remove="Xunit.DependencyInjection.Logging" />
         <PackageReference Update="JetBrains.Annotations" Version="2023.3.0" />
         <PackageReference Update="Moq" Version="4.20.69" />
         <PackageReference Update="AutoFixture" Version="4.18.0" />
@@ -47,6 +46,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Update="Xunit.DependencyInjection.Logging" Version="8.1.0" />
     </ItemGroup>
 
     <ItemGroup>

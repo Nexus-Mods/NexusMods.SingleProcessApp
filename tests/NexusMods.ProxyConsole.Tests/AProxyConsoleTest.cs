@@ -14,16 +14,18 @@ public class AProxyConsoleTest : IAsyncLifetime
     private ClientRendererAdaptor? _client;
     protected IRenderer Server => _server!;
     private IRenderer? _server;
+    private readonly IServiceProvider _provider;
 
-    protected AProxyConsoleTest()
+    protected AProxyConsoleTest(IServiceProvider provider)
     {
+        _provider = provider;
         (_serverStream, _clientStream) = FullDuplexStream.CreatePair();
     }
 
     public async Task InitializeAsync()
     {
-        _client = new ClientRendererAdaptor(_clientStream, LoggingRenderer);
-        (_, _server) = await ProxiedRenderer.Create(_serverStream);
+        _client = new ClientRendererAdaptor(_clientStream, LoggingRenderer, _provider);
+        (_, _server) = await ProxiedRenderer.Create(_provider, _serverStream);
     }
 
     public async Task EventuallyAsync(Func<Task> fn)

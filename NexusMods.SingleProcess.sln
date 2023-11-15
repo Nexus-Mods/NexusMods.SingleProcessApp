@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexusMods.ProxyConsole", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexusMods.ProxyConsole.Tests", "tests\NexusMods.ProxyConsole.Tests\NexusMods.ProxyConsole.Tests.csproj", "{54D8A4ED-CEA2-4430-9418-EB0250DC0AAD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexusMods.ProxyConsole.Abstractions", "src\NexusMods.ProxyConsole.Abstractions\NexusMods.ProxyConsole.Abstractions.csproj", "{A1C32F89-0D8F-4CFB-91FD-6E7B4677BAEE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,7 @@ Global
 		{35E2A78A-46A7-4B87-A905-7E30EF8E1F38} = {6ED01F9D-5E12-4EB2-9601-64A2ADC719DE}
 		{C7F52990-BD0D-4D1F-ADEC-61B872793B95} = {0377EBE6-F147-4233-86AD-32C821B9567E}
 		{54D8A4ED-CEA2-4430-9418-EB0250DC0AAD} = {6ED01F9D-5E12-4EB2-9601-64A2ADC719DE}
+		{A1C32F89-0D8F-4CFB-91FD-6E7B4677BAEE} = {0377EBE6-F147-4233-86AD-32C821B9567E}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A92DED3D-BC67-4E04-9A06-9A1B302B3070}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -67,5 +70,9 @@ Global
 		{54D8A4ED-CEA2-4430-9418-EB0250DC0AAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54D8A4ED-CEA2-4430-9418-EB0250DC0AAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54D8A4ED-CEA2-4430-9418-EB0250DC0AAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1C32F89-0D8F-4CFB-91FD-6E7B4677BAEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1C32F89-0D8F-4CFB-91FD-6E7B4677BAEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1C32F89-0D8F-4CFB-91FD-6E7B4677BAEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1C32F89-0D8F-4CFB-91FD-6E7B4677BAEE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -2,12 +2,9 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Nerdbank.Streams;
 using NexusMods.ProxyConsole;
 
 namespace NexusMods.SingleProcess;
@@ -15,7 +12,7 @@ namespace NexusMods.SingleProcess;
 /// <summary>
 /// A director that will connect to the main process and connect the console to it
 /// </summary>
-public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, SingleProcessSettings settings)
+public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, SingleProcessSettings settings, IServiceProvider provider)
     : ADirector(logger, settings)
 {
     private TcpClient? _client;
@@ -48,10 +45,10 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
             logger.LogDebug("Connected to main process {ProcessId} on port {Port}", process.Id, port);
             await RunTillCloseAsync(proxy);
         }
-        catch (SocketException ex)
+        catch (SocketException)
         {
             logger.LogWarning("Failed to connect to main process {ProcessId} on port {Port}", process.Id, port);
-            throw ex;
+            throw;
         }
     }
 
@@ -59,7 +56,7 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
     {
         try
         {
-            var adaptor = new ClientRendererAdaptor(_stream!, proxy.Renderer, proxy.Arguments);
+            var adaptor = new ClientRendererAdaptor(_stream!, proxy.Renderer, provider, proxy.Arguments);
             await adaptor.RunningTask;
         }
         catch (IOException ex)
@@ -71,10 +68,11 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
     /// <summary>
     /// Async dispose
     /// </summary>
-    public override async ValueTask DisposeAsync()
+    public override ValueTask DisposeAsync()
     {
         _client?.Dispose();
         SharedArray?.Dispose();
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -85,6 +83,7 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
     public static ClientProcessDirector Create(IServiceProvider serviceProvider)
     {
         return new ClientProcessDirector(serviceProvider.GetRequiredService<ILogger<ClientProcessDirector>>(),
-            serviceProvider.GetRequiredService<SingleProcessSettings>());
+            serviceProvider.GetRequiredService<SingleProcessSettings>(),
+            serviceProvider);
     }
 }

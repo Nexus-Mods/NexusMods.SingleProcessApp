@@ -1,9 +1,9 @@
 using NexusMods.ProxyConsole.Abstractions;
-using NexusMods.ProxyConsole.Implementations;
+using NexusMods.ProxyConsole.Abstractions.Implementations;
 
 namespace NexusMods.Spectre.ProxyConsole.Tests;
 
-public class ProxyTests : AProxyConsoleTest
+public class ProxyTests(IServiceProvider provider) : AProxyConsoleTest(provider)
 {
     [Fact]
     public async Task CanRenderTest()

@@ -1,5 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Nerdbank.Streams;
 using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.ProxyConsole.Messages;
@@ -20,9 +23,9 @@ public class ProxiedRenderer : IRenderer
     /// </summary>
     /// <param name="duplexStream"></param>
     /// <returns></returns>
-    public static async Task<(string[] Arguments, IRenderer Renderer)> Create(Stream duplexStream)
+    public static async Task<(string[] Arguments, IRenderer Renderer)> Create(IServiceProvider provider, Stream duplexStream)
     {
-        var renderer = new ProxiedRenderer(new Serializer(duplexStream));
+        var renderer = new ProxiedRenderer(new Serializer(duplexStream, provider.GetRequiredService<IEnumerable<IRenderableDefinition>>()));
 
         var arguments = await renderer._serializer.SendAndReceiveAsync<ProgramArgumentsResponse, ProgramArgumentsRequest>
             (new ProgramArgumentsRequest());

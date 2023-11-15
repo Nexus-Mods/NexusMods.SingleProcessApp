@@ -1,8 +1,7 @@
-using System.Text;
 using Microsoft.Extensions.Logging;
 using NexusMods.ProxyConsole;
 using NexusMods.ProxyConsole.Abstractions;
-using NexusMods.ProxyConsole.Implementations;
+using NexusMods.ProxyConsole.Abstractions.Implementations;
 using Spectre.Console.Testing;
 
 namespace NexusMods.SingleProcess.Tests;
