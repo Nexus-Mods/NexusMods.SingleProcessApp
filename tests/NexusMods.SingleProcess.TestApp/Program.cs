@@ -89,7 +89,7 @@ class Handler(ILogger<Handler> logger, IFileSystem fileSystem, IServiceProvider 
         {
             logger.LogInformation("Running command: {Arguments}", string.Join(' ', args));
             var configurator = provider.GetRequiredService<CommandLineConfigurator>();
-            return await configurator.RunAsync(args, renderer);
+            return await configurator.RunAsync(args, renderer, token);
         }
         catch (Exception e)
         {
