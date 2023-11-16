@@ -7,6 +7,7 @@ using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using NexusMods.ProxyConsole.Abstractions;
@@ -101,17 +102,22 @@ public class CommandLineConfigurator
     /// </summary>
     /// <param name="args"></param>
     /// <param name="renderer"></param>
+    /// <param name="token"></param>
     /// <returns></returns>
-    public async Task<int> RunAsync(string[] args, IRenderer renderer)
+    public async Task<int> RunAsync(string[] args, IRenderer renderer, CancellationToken token)
     {
 
         var parser = new CommandLineBuilder(_rootCommand)
+            .UseHelp()
+            .UseParseErrorReporting()
             .AddMiddleware((ctx, next) =>
             {
                 foreach (var type in _injectedTypes)
                 {
                     if (type == typeof(IRenderer))
                         ctx.BindingContext.AddService(type, _ => renderer);
+                    else if (type == typeof(CancellationToken))
+                        ctx.BindingContext.AddService(type, _ => token);
                     else
                         ctx.BindingContext.AddService(type, _ => _provider.GetRequiredService(type));
                 }
@@ -119,6 +125,6 @@ public class CommandLineConfigurator
             })
             .Build();
 
-        return await parser.InvokeAsync(args);
+        return await parser.InvokeAsync(args, new ConsoleToRendererAdapter(renderer));
     }
 }
