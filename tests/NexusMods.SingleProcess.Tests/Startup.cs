@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NexusMods.Paths;
@@ -13,7 +12,10 @@ public class Startup
     public void ConfigureServices(IServiceCollection container)
     {
         container
-            .AddSingleProcess((_, s) => s)
+            .AddSingleProcess(_ => new SingleProcessSettings
+            {
+                SyncFile = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory).Combine("tests.sync")
+            })
             .AddSingleton<CommandLineConfigurator>()
             .AddDefaultRenderers()
             .AddDefaultParsers()

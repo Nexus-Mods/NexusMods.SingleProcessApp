@@ -8,7 +8,7 @@ public class SingleProcessSettings
     /// <summary>
     /// The path to the sync file, this file is used to publish the process id of the main process, and the TCP port it's listening on.
     /// </summary>
-    public AbsolutePath SyncFile { get; set; } = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory).Combine("single_process.sync");
+    public required AbsolutePath SyncFile { get; init; }
 
     /// <summary>
     /// The size of the sync file, this should be at least the width of two uints. One will be used to store the process

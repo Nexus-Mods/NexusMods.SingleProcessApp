@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using NexusMods.Paths;
 
 namespace NexusMods.SingleProcess;
 
@@ -11,13 +12,13 @@ public static class ServiceExtensions
     /// <summary>
     /// Add the single process services to the service collection.
     /// </summary>
-    /// <param name="services"></param>
+    /// <param name="services"></param>s
     /// <param name="configFn"></param>
     /// <returns></returns>
     public static IServiceCollection AddSingleProcess(this IServiceCollection services,
-        Func<IServiceProvider, SingleProcessSettings, SingleProcessSettings> configFn) =>
+        Func<IServiceProvider, SingleProcessSettings> configFn) =>
         services.AddSingleton<MainProcessDirector>()
             .AddSingleton<ClientProcessDirector>()
             .AddSingleton<StartupDirector>()
-            .AddSingleton<SingleProcessSettings>(s => configFn(s, new SingleProcessSettings()));
+            .AddSingleton(configFn);
 }
