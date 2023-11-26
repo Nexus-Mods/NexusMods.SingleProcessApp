@@ -33,8 +33,9 @@ public class MainProcessDirector : ADirector
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="singleProcessSettings"></param>
+    /// <param name="provider"></param>
     public MainProcessDirector(ILogger<MainProcessDirector> logger, SingleProcessSettings singleProcessSettings, IServiceProvider provider)
-        : base(logger, singleProcessSettings)
+        : base(singleProcessSettings)
     {
         _logger = logger;
         _provider = provider;

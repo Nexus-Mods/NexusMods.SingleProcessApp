@@ -3,6 +3,9 @@ using NexusMods.Paths;
 
 namespace NexusMods.SingleProcess;
 
+/// <summary>
+/// App wide settings for the single process application.
+/// </summary>
 public class SingleProcessSettings
 {
     /// <summary>

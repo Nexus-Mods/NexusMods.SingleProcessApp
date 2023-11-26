@@ -25,6 +25,7 @@ public class ClientRendererAdaptor
     /// </summary>
     /// <param name="duplexStream"></param>
     /// <param name="renderer"></param>
+    /// <param name="provider"></param>
     /// <param name="args"></param>
     public ClientRendererAdaptor(Stream duplexStream, IRenderer renderer, IServiceProvider provider, string[]? args = null)
     {

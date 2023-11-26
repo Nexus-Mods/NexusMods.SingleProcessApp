@@ -28,8 +28,8 @@ public interface IRenderableDefinition
     /// Converts the given <see cref="IRenderable"/> to a <see cref="IRenderToSpectre"/> that can be
     /// rendered to the console. Sub-renderables should be converted using the given subConvert function.
     /// </summary>
-    /// <param name="console"></param>
     /// <param name="renderable"></param>
+    /// <param name="subConvert"></param>
     /// <returns></returns>
     public ValueTask<Ansi.IRenderable> ToSpectreAsync(IRenderable renderable, Func<IRenderable, ValueTask<Ansi.IRenderable>> subConvert);
 }

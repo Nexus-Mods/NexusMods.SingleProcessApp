@@ -13,7 +13,7 @@ namespace NexusMods.SingleProcess;
 /// A director that will connect to the main process and connect the console to it
 /// </summary>
 public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, SingleProcessSettings settings, IServiceProvider provider)
-    : ADirector(logger, settings)
+    : ADirector(settings)
 {
     private TcpClient? _client;
     private NetworkStream? _stream;

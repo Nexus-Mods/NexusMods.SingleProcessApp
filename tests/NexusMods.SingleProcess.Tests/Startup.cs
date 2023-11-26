@@ -12,13 +12,19 @@ public class Startup
     public void ConfigureServices(IServiceCollection container)
     {
         container
-            .AddSingleProcess(_ => new SingleProcessSettings
-            {
-                SyncFile = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory).Combine("tests.sync")
-            })
+            .AddFileSystem()
+            .AddSingleProcess()
             .AddSingleton<CommandLineConfigurator>()
             .AddDefaultRenderers()
             .AddDefaultParsers()
+            .AddSingleton(services =>
+            {
+                var fileSystem = services.GetRequiredService<IFileSystem>();
+                return new SingleProcessSettings
+                {
+                    SyncFile = fileSystem.GetKnownPath(KnownPath.EntryDirectory).Combine("tests.sync")
+                };
+            })
             .AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug))
             .AddLogging(builder => builder.AddXunitOutput());
 

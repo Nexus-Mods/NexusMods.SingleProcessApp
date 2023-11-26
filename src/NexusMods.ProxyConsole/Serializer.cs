@@ -30,6 +30,7 @@ public class Serializer
     /// Primary constructor, takes a duplex capable stream
     /// </summary>
     /// <param name="duplexStream"></param>
+    /// <param name="renderableDefinitions"></param>
     public Serializer(Stream duplexStream, IEnumerable<IRenderableDefinition> renderableDefinitions)
     {
         _stream = duplexStream;
@@ -94,9 +95,9 @@ public class Serializer
     /// <summary>
     /// Sends an acknowledgement to the server.
     /// </summary>
-    public async Task AcknowledgeAsync()
+    public Task AcknowledgeAsync()
     {
-        await SendAsync(new Acknowledge());
+        return SendAsync(new Acknowledge());
     }
 
     /// <summary>

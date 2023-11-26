@@ -2,6 +2,9 @@ using System.Threading.Tasks;
 
 namespace NexusMods.ProxyConsole.Abstractions;
 
+/// <summary>
+/// An object that can render <see cref="IRenderable"/>s.
+/// </summary>
 public interface IRenderer
 {
     /// <summary>

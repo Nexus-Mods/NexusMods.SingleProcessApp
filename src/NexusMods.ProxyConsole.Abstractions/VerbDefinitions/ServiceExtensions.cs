@@ -31,6 +31,7 @@ public static class ServiceExtensions
     /// Registers a method as a CLI verb. The method must be static and have a return type of
     /// Task&lt;int&gt;.
     /// </summary>
+    /// <param name="services"></param>
     /// <param name="info"></param>
     /// <returns></returns>
     public static IServiceCollection AddVerb(this IServiceCollection services, MethodInfo info)

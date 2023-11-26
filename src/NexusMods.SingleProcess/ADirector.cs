@@ -6,7 +6,11 @@ using Microsoft.Extensions.Logging;
 
 namespace NexusMods.SingleProcess;
 
-public abstract class ADirector(ILogger logger, SingleProcessSettings settings) : IAsyncDisposable, IDisposable
+/// <summary>
+/// Base class for directors, gathers some duplicateded logic
+/// </summary>
+/// <param name="settings"></param>
+public abstract class ADirector(SingleProcessSettings settings) : IAsyncDisposable, IDisposable
 {
     /// <summary>
     /// The single process settings
