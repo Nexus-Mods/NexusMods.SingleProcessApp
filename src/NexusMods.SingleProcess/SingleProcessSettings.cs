@@ -17,18 +17,6 @@ public class SingleProcessSettings
     public Size SyncFileSize { get; init; } = Size.FromLong(8);
 
     /// <summary>
-    /// The start of the port range to use when attempting to start a TCP listener. The actual port will be randomly selected
-    /// and will be between this and <see cref="PortMax"/>, based on what ports are available on the system.
-    /// </summary>
-    public int PortMin { get; set; } = 10000;
-
-    /// <summary>
-    /// The end of the port range to use when attempting to start a TCP listener. The actual port will be randomly selected
-    /// between this and <see cref="PortMin"/>, based on what ports are available on the system.
-    /// </summary>
-    public int PortMax { get; set; } = 20000;
-
-    /// <summary>
     /// The amount of time the TCPListener will pause waiting for new connections before checking if it should exit.
     /// </summary>
     public TimeSpan ListenTimeout { get; set; } = TimeSpan.FromSeconds(5);
