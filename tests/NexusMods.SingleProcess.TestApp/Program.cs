@@ -1,9 +1,4 @@
-﻿using System.CommandLine;
-using System.CommandLine.Binding;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
-using System.Reflection;
-using System.Text;
+﻿using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,7 +8,6 @@ using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.ProxyConsole.Abstractions.Implementations;
 using NexusMods.ProxyConsole.Abstractions.VerbDefinitions;
 using NexusMods.SingleProcess;
-using NexusMods.SingleProcess.TestApp.Commands;
 using Text = NexusMods.ProxyConsole.Abstractions.Implementations.Text;
 
 
@@ -22,12 +16,19 @@ var host = Host.CreateDefaultBuilder()
     {
         s.AddLogging();
         s.AddFileSystem();
-        s.AddSingleProcess((_, s) => s);
+        s.AddSingleProcess();
         s.AddDefaultRenderers();
 
         s.AddSingleton<IStartupHandler, Handler>();
 
-        s.AddSingleton<SingleProcessSettings>();
+        s.AddSingleton<SingleProcessSettings>(services =>
+        {
+            var fileSystem = services.GetRequiredService<IFileSystem>();
+            return new SingleProcessSettings
+            {
+                SyncFile = fileSystem.GetKnownPath(KnownPath.EntryDirectory).Combine("tests.sync")
+            };
+        });
         s.AddDefaultParsers();
 
         s.AddVerb(() => Verbs.HelloWorld);
@@ -39,7 +40,7 @@ var host = Host.CreateDefaultBuilder()
 Console.OutputEncoding = Encoding.UTF8;
 
 var startupDirector = host.Services.GetRequiredService<StartupDirector>();
-return await startupDirector.Start(args, true);
+return await startupDirector.Start(args);
 
 
 static class Verbs

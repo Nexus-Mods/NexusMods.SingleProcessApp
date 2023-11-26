@@ -20,13 +20,15 @@ public class StartupDirector
     private readonly SingleProcessSettings _settings;
     private readonly IStartupHandler _handler;
     private readonly IServiceProvider _provider;
-    private MainProcessDirector? _mainProcessDirector = null;
+    private MainProcessDirector? _mainProcessDirector;
 
     /// <summary>
     /// DI Constructor
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="settings"></param>
+    /// <param name="startupHandler"></param>
+    /// <param name="provider"></param>
     public StartupDirector(ILogger<StartupDirector> logger, SingleProcessSettings settings, IStartupHandler startupHandler, IServiceProvider provider)
     {
         _logger = logger;
@@ -109,10 +111,8 @@ public class StartupDirector
             }
             catch (Exception ex)
             {
-                //_logger.LogWarning(ex, "Failed to connect to main process");
                 lastException = ex;
-                await Task.Delay(100);
-                continue;
+                await Task.Delay(10);
             }
         }
         _logger.LogError(lastException, "Failed to connect to main process");

@@ -9,6 +9,7 @@ namespace NexusMods.SingleProcess;
 /// </summary>
 public class KeepAliveToken : IDisposable
 {
+    private bool _disposed;
     private readonly TaskCompletionSource _tcs;
 
     /// <summary>
@@ -26,7 +27,8 @@ public class KeepAliveToken : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (!_tcs.TrySetResult())
-            _tcs.TrySetCanceled();
+        if (_disposed) return;
+        _disposed = true;
+        _tcs.TrySetResult();
     }
 }

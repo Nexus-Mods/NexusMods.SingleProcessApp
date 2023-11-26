@@ -33,8 +33,9 @@ public class MainProcessDirector : ADirector
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="singleProcessSettings"></param>
+    /// <param name="provider"></param>
     public MainProcessDirector(ILogger<MainProcessDirector> logger, SingleProcessSettings singleProcessSettings, IServiceProvider provider)
-        : base(logger, singleProcessSettings)
+        : base(singleProcessSettings)
     {
         _logger = logger;
         _provider = provider;
@@ -132,25 +133,12 @@ public class MainProcessDirector : ADirector
 
     private Task StartTcpListenerAsync(IMainProcessHandler handler)
     {
-        while (!_cancellationToken.IsCancellationRequested)
-        {
-            var port = Random.Shared.Next(Settings.PortMin, Settings.PortMax);
-            try
-            {
-                _tcpListener = new TcpListener(IPAddress.Loopback, port);
-                _tcpListener.Start();
-                _listenerTask = Task.Run(async () => await StartListeningAsync(handler), _cancellationToken);
-                _logger.LogInformation("Started TCP listener on port {Port}", port);
-                return Task.CompletedTask;
-            }
-            catch (SocketException exception)
-            {
-                // That port didn't work, try another one
-                _logger.LogInformation(exception, "Failed to start TCP listener on port {Port}, trying a different port", port);
-            }
-
-        }
-        throw new TaskCanceledException();
+        _tcpListener = new TcpListener(IPAddress.Loopback, 0);
+        _tcpListener.Start();
+        _listenerTask = Task.Run(async () => await StartListeningAsync(handler), _cancellationToken);
+        var port = ((IPEndPoint)_tcpListener.LocalEndpoint).Port;
+        _logger.LogInformation("Started TCP listener on port {Port}", port);
+        return Task.CompletedTask;
     }
 
     private async Task StartListeningAsync(IMainProcessHandler handler)
