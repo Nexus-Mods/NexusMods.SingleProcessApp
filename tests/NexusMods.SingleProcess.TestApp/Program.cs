@@ -39,7 +39,7 @@ var host = Host.CreateDefaultBuilder()
 Console.OutputEncoding = Encoding.UTF8;
 
 var startupDirector = host.Services.GetRequiredService<StartupDirector>();
-return await startupDirector.Start(args, true);
+return await startupDirector.Start(args);
 
 
 static class Verbs

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using Nerdbank.Streams;
 using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.ProxyConsole.Messages;
 

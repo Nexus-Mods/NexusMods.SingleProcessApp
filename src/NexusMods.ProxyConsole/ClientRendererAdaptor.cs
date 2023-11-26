@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using MemoryPack;
-using MemoryPack.Streaming;
 using Microsoft.Extensions.DependencyInjection;
-using Nerdbank.Streams;
 using NexusMods.ProxyConsole.Abstractions;
 using NexusMods.ProxyConsole.Messages;
-using Spectre.Console;
 
 namespace NexusMods.ProxyConsole;
 
