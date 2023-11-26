@@ -16,15 +16,19 @@ var host = Host.CreateDefaultBuilder()
     {
         s.AddLogging();
         s.AddFileSystem();
-        s.AddSingleProcess(_ => new SingleProcessSettings
-        {
-            SyncFile = FileSystem.Shared.GetKnownPath(KnownPath.EntryDirectory).Combine("testApp.sync")
-        });
+        s.AddSingleProcess();
         s.AddDefaultRenderers();
 
         s.AddSingleton<IStartupHandler, Handler>();
 
-        s.AddSingleton<SingleProcessSettings>();
+        s.AddSingleton<SingleProcessSettings>(services =>
+        {
+            var fileSystem = services.GetRequiredService<IFileSystem>();
+            return new SingleProcessSettings
+            {
+                SyncFile = fileSystem.GetKnownPath(KnownPath.EntryDirectory).Combine("tests.sync")
+            };
+        });
         s.AddDefaultParsers();
 
         s.AddVerb(() => Verbs.HelloWorld);

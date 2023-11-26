@@ -14,10 +14,8 @@ public static class ServiceExtensions
     /// <param name="services"></param>s
     /// <param name="configFn"></param>
     /// <returns></returns>
-    public static IServiceCollection AddSingleProcess(this IServiceCollection services,
-        Func<IServiceProvider, SingleProcessSettings> configFn) =>
+    public static IServiceCollection AddSingleProcess(this IServiceCollection services) =>
         services.AddSingleton<MainProcessDirector>()
             .AddSingleton<ClientProcessDirector>()
-            .AddSingleton<StartupDirector>()
-            .AddSingleton(configFn);
+            .AddSingleton<StartupDirector>();
 }

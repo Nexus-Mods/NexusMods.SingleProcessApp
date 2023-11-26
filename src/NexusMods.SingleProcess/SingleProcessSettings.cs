@@ -29,5 +29,5 @@ public class SingleProcessSettings
     /// <summary>
     /// The amount of time the client process will wait for the main process to start before giving up.
     /// </summary>
-    public TimeSpan ClientConnectTimeout { get; set; } = TimeSpan.FromSeconds(15);
+    public TimeSpan ClientConnectTimeout { get; set; } = TimeSpan.FromSeconds(60);
 }
