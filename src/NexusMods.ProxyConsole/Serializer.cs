@@ -21,7 +21,6 @@ namespace NexusMods.ProxyConsole;
 /// </summary>
 public class Serializer
 {
-    private readonly Stream _stream;
     private readonly BinaryWriter _binaryWriter;
     private readonly MemoryPool<byte> _memoryPool;
     private readonly BinaryReader _binaryReader;
@@ -33,9 +32,9 @@ public class Serializer
     /// <param name="renderableDefinitions"></param>
     public Serializer(Stream duplexStream, IEnumerable<IRenderableDefinition> renderableDefinitions)
     {
-        _stream = duplexStream;
-        _binaryWriter = new BinaryWriter(_stream, Encoding.UTF8, true);
-        _binaryReader = new BinaryReader(_stream, Encoding.UTF8, true);
+        var stream = duplexStream;
+        _binaryWriter = new BinaryWriter(stream, Encoding.UTF8, true);
+        _binaryReader = new BinaryReader(stream, Encoding.UTF8, true);
         _memoryPool = MemoryPool<byte>.Shared;
 
         if (!MemoryPackFormatterProvider.IsRegistered<IRenderable>())
@@ -89,7 +88,7 @@ public class Serializer
     {
         var serialized = MemoryPackSerializer.Serialize<IMessage>(msg);
         _binaryWriter.Write(serialized.Length);
-        await _stream.WriteAsync(serialized);
+        await _binaryWriter.BaseStream.WriteAsync(serialized);
     }
 
     /// <summary>
@@ -125,7 +124,7 @@ public class Serializer
         var size = _binaryReader.ReadUInt32();
         using var buffer = _memoryPool.Rent((int)size);
         var sized = buffer.Memory[..(int)size];
-        await _stream.ReadExactlyAsync(sized);
+        await _binaryReader.BaseStream.ReadExactlyAsync(sized);
         var deserialized = MemoryPackSerializer.Deserialize<IMessage>(sized.Span);
         return deserialized;
     }
