@@ -1,6 +1,5 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using NexusMods.Paths;
 
 namespace NexusMods.SingleProcess;
 
