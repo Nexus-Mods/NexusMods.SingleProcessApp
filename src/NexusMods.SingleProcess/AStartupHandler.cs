@@ -49,7 +49,8 @@ public abstract class AStartupHandler(ILogger logger, IFileSystem fileSystem) : 
             {
                 FileName = currentExecutable.ToString(),
                 Arguments = MainProcessArgument,
-                UseShellExecute = false
+                UseShellExecute = true,
+                CreateNoWindow = true,
             };
         }
 
@@ -57,7 +58,8 @@ public abstract class AStartupHandler(ILogger logger, IFileSystem fileSystem) : 
 
         var process = new Process
         {
-            StartInfo = info
+            StartInfo = info,
+
         };
         if (!process.Start())
             throw new MainProcessStartException(info.FileName, info.Arguments);
