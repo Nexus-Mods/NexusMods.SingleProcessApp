@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -37,6 +37,7 @@ public class ClientProcessDirector(ILogger<ClientProcessDirector> logger, Single
         logger.LogInformation("Found main process {ProcessId} listening on port {Port}", process.Id, port);
 
         _client = new TcpClient();
+        _client.NoDelay = true; // Disable Nagle's algorithm to reduce delay.
         try
         {
             await _client.ConnectAsync(IPAddress.Loopback, port);
