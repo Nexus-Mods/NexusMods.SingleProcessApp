@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using MemoryPack;
 using MemoryPack.Formatters;
 using MemoryPack.Streaming;
@@ -47,16 +48,14 @@ public class Serializer
 
             MemoryPackFormatterProvider.Register(new DynamicUnionFormatter<IRenderable>(listDefs.ToArray()));
         }
-
-
     }
-
 
     /// <summary>
     /// Sends the given message to the server and waits for an acknowledgement.
     /// </summary>
     /// <param name="msg"></param>
     /// <typeparam name="TMessage"></typeparam>
+    [PublicAPI]
     public async Task SendAndAckAsync<TMessage>(TMessage msg)
     where TMessage : IMessage
     {
@@ -94,6 +93,7 @@ public class Serializer
     /// <summary>
     /// Sends an acknowledgement to the server.
     /// </summary>
+    [PublicAPI]
     public Task AcknowledgeAsync()
     {
         return SendAsync(new Acknowledge());
