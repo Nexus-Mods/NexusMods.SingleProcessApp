@@ -53,11 +53,9 @@ public class ClientRendererAdaptor
                 {
                     case Render renderable:
                         await _renderer.RenderAsync(renderable.Renderable);
-                        await _serializer.AcknowledgeAsync();
                         break;
                     case Clear:
                         await _renderer.ClearAsync();
-                        await _serializer.AcknowledgeAsync();
                         break;
                     case ProgramArgumentsRequest:
                         await _serializer.SendAsync(new ProgramArgumentsResponse()

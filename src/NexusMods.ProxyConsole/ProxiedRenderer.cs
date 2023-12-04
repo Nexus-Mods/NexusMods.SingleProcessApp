@@ -42,7 +42,7 @@ public class ProxiedRenderer : IRenderer
     /// <param name="renderable"></param>
     public async ValueTask RenderAsync(IRenderable renderable)
     {
-        await _serializer.SendAndAckAsync(new Render {Renderable = renderable});
+        await _serializer.SendAsync(new Render {Renderable = renderable});
     }
 
     /// <summary>
@@ -50,6 +50,6 @@ public class ProxiedRenderer : IRenderer
     /// </summary>
     public async ValueTask ClearAsync()
     {
-        await _serializer.SendAndAckAsync(new Clear());
+        await _serializer.SendAsync(new Clear());
     }
 }
