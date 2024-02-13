@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Net;
@@ -161,7 +161,7 @@ public class MainProcessDirector : ADirector
                 var combined = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, timeout.Token);
 
                 var found = await _tcpListener!.AcceptTcpClientAsync(combined.Token);
-
+                found.NoDelay = true; // Disable Nagle's algorithm to reduce delay.
                 _runningClients.Add(Task.Run(() => HandleClientAsync(found, handler), _cancellationToken));
 
                 _logger.LogInformation("Accepted TCP connection from {RemoteEndPoint}",
