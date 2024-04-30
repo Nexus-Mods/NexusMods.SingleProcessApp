@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <XunitStartupAssembly>NexusMods.SingleProcess.Tests</XunitStartupAssembly>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\src\NexusMods.SingleProcess\NexusMods.SingleProcess.csproj" />

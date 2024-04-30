@@ -2,6 +2,7 @@
     <PropertyGroup>
       <RootNamespace>NexusMods.SingleProcess</RootNamespace>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <LangVersion>latest</LangVersion>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="MemoryPack.Streaming" Version="1.10.0" />
