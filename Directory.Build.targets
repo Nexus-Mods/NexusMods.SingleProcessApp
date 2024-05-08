@@ -1,7 +1,6 @@
 <Project>
     <PropertyGroup>
         <Nullable>enable</Nullable>
-        <LangVersion>11</LangVersion>
         <ImplicitUsings>false</ImplicitUsings>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
     </PropertyGroup>

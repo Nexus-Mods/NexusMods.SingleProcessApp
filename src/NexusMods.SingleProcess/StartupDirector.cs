@@ -57,7 +57,7 @@ public class StartupDirector
             {
                 return await _handler.StartUiWindowAsync();
             }
-            else if (args[1] == _handler.MainProcessArgument)
+            else if (args[0] == _handler.MainProcessArgument)
             {
                 return await StartMainProcessDirector();
             }
