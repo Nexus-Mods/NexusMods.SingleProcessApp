@@ -65,24 +65,24 @@ static class Verbs
         var rows = new List<IRenderable[]>();
         for (var i = 0; i < count; i++)
         {
-            rows.Add(new IRenderable[]
-                { new Text { Template = i.ToString() }, new Text { Template = Guid.NewGuid().ToString() } });
+            rows.Add([new Text { Template = i.ToString() }, new Text { Template = Guid.NewGuid().ToString() }]);
         }
 
         await renderer.RenderAsync(new Table
         {
-            Columns = new IRenderable[]
-            {
+            Columns =
+            [
                 new Text { Template = "Index" },
                 new Text { Template = "Guid" }
-            },
+            ],
             Rows = rows.ToArray()
         });
         return 0;
     }
 }
 
-class Handler(ILogger<Handler> logger, IFileSystem fileSystem, IServiceProvider provider) : AStartupHandler(logger, fileSystem)
+class Handler(ILogger<Handler> logger, IFileSystem fileSystem, IServiceProvider provider) :
+    AStartupHandler(logger, fileSystem)
 {
     public override async Task<int> HandleCliCommandAsync(string[] args, IRenderer renderer, CancellationToken token)
     {

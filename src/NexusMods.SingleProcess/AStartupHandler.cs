@@ -23,7 +23,7 @@ public abstract class AStartupHandler(ILogger logger, IFileSystem fileSystem) : 
     public abstract Task<int> StartUiWindowAsync();
 
     /// <inheritdoc />
-    public virtual Task StartMainProcessAsync()
+    public Task StartMainProcess()
     {
         var currentProcess = Process.GetCurrentProcess();
         logger.LogInformation("Starting main process from client process: {Process}", currentProcess.Id);
@@ -37,7 +37,7 @@ public abstract class AStartupHandler(ILogger logger, IFileSystem fileSystem) : 
             info = new ProcessStartInfo
             {
                 FileName = currentExecutable.ToString(),
-                Arguments = $"{Environment.GetCommandLineArgs()[0]} {MainProcessArgument}",
+                Arguments = $"{Environment.GetCommandLineArgs()[0]}",
                 WorkingDirectory = Environment.CurrentDirectory,
                 UseShellExecute = false
             };
@@ -48,7 +48,6 @@ public abstract class AStartupHandler(ILogger logger, IFileSystem fileSystem) : 
             info = new ProcessStartInfo
             {
                 FileName = currentExecutable.ToString(),
-                Arguments = MainProcessArgument,
                 UseShellExecute = true,
                 CreateNoWindow = true,
             };

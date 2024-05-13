@@ -11,15 +11,15 @@ public class GuidTable
         var rows = new List<IRenderable[]>();
         for (var i = 0; i < count; i++)
         {
-            rows.Add(new IRenderable[] { new Text { Template = i.ToString() }, new Text { Template = Guid.NewGuid().ToString() } });
+            rows.Add([new Text { Template = i.ToString() }, new Text { Template = Guid.NewGuid().ToString() }]);
         }
         await renderer.RenderAsync(new Table
         {
-            Columns = new IRenderable[]
-            {
+            Columns =
+            [
                 new Text { Template = "Index" },
                 new Text { Template = "Guid" }
-            },
+            ],
             Rows = rows.ToArray()
         });
         return 0;

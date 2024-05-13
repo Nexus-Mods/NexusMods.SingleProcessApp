@@ -26,10 +26,11 @@ public interface IStartupHandler
     public Task<int> StartUiWindowAsync();
 
     /// <summary>
-    /// Called from a client process to handle the creation of a new main process.
+    /// Creates a new process that will run the main code. This is called when the current process is not the main process
+    /// and the current process wants to run a CLI command.
     /// </summary>
     /// <returns></returns>
-    public Task StartMainProcessAsync();
+    public Task StartMainProcess();
 
     /// <summary>
     /// When the application is called with this single CLI argument, it will start the main process.

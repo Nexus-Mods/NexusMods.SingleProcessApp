@@ -46,45 +46,20 @@ public class StartupDirector
     /// If a IAnsiConsole is passed in, it will be used to render the CLI commands, otherwise AnsiConsole.Console will be used
     /// </summary>
     /// <param name="args"></param>
-    /// <param name="debugMode"></param>
     /// <param name="console"></param>
     /// <returns></returns>
-    public async Task<int> Start(string[] args, bool debugMode = false, IAnsiConsole? console = null)
+    public async Task<int> Start(string[] args, IAnsiConsole? console = null)
     {
-        if (debugMode)
+        _logger.LogInformation("Starting application with args: {Arguments}", string.Join(' ', args));
+        if (args.Length == 0)
         {
-            if (args.Length == 0)
-            {
-                return await _handler.StartUiWindowAsync();
-            }
-            else if (args[0] == _handler.MainProcessArgument)
-            {
-                return await StartMainProcessDirector();
-            }
-            else
-            {
-                return await _handler.HandleCliCommandAsync(args, new SpectreRenderer(console ?? AnsiConsole.Console));
-            }
+            return await BecomeMainProcess();
         }
         else
         {
-            _logger.LogInformation("Starting application with args: {Arguments}", string.Join(' ', args));
-            if (args.Length == 0)
-            {
-                await _handler.StartMainProcessAsync();
-                return await SendCommandAsync(args, console);
-            }
-            else if (args[0] == _handler.MainProcessArgument)
-            {
-                return await StartMainProcessDirector();
-            }
-            else
-            {
-                await _handler.StartMainProcessAsync();
-                return await SendCommandAsync(args, console);
-            }
+            await _handler.StartMainProcess();
+            return await SendCommandAsync(args, console);
         }
-
     }
 
     /// <summary>
@@ -123,10 +98,14 @@ public class StartupDirector
     /// Starts the main process director locally
     /// </summary>
     /// <returns></returns>
-    private async Task<int> StartMainProcessDirector()
+    private async Task<int> BecomeMainProcess()
     {
         _mainProcessDirector = _provider.GetRequiredService<MainProcessDirector>();
-        await _mainProcessDirector.TryStartMainAsync(new Handler(this));
+        if (!await _mainProcessDirector.TryStartMainAsync(new Handler(this)))
+        {
+            _logger.LogError("Failed to start main process, trying to connect");
+            return -1;
+        }
         while (_mainProcessDirector.IsListening)
         {
             await Task.Delay(TimeSpan.FromSeconds(2));
